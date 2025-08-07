@@ -1,0 +1,7 @@
+user2:passwor
+user7:abcABC
+user8:pass
+user15:qwerty
+user27:admin
+
+5 password hashes cracked, 45 left

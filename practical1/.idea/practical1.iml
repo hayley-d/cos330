@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="jdk" jdkName="RVM: ruby-3.4.1" jdkType="RUBY_SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="PROVIDED" name="base64 (v0.3.0, RVM: ruby-3.4.1) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bcrypt (v3.1.20, RVM: ruby-3.4.1) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bundler (v2.7.1, RVM: ruby-3.4.1) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="digest (v3.2.0, RVM: ruby-3.4.1) [gem]" level="application" />
