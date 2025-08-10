@@ -42,56 +42,60 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
     });
 
     return (
-        <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-            >
-                {mode === "register" && (
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Your name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
+        <div className="min-h-svh w-svw flex items-center justify-center bg-background text-foreground p-4">
+            <div className="w-full max-w-md rounded-2xl border bg-card text-card-foreground shadow-lg p-6">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        {mode === "register" && (
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-foreground">Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Your name" className="bg-background" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         )}
-                    />
-                )}
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                                <Input type="email" placeholder="you@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input type="password" placeholder="********" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Button type="submit" className="w-full">
-                    {mode === "login" ? "Log In" : "Register"}
-                </Button>
-            </form>
-        </Form>
+
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-foreground">Email</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="you@example.com" className="bg-background" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-foreground">Password</FormLabel>
+                                    <FormControl>
+                                        <Input type="password" placeholder="********" className="bg-background" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <Button type="submit" className="w-full">
+                            {mode === "login" ? "Log In" : "Register"}
+                        </Button>
+                    </form>
+                </Form>
+            </div>
+        </div>
     );
 }
