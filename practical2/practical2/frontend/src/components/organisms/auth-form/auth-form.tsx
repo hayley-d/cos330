@@ -8,14 +8,17 @@ import {
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
     Input,
-    Button
+    Label,
+    Button,
+    Card,
+    CardHeader,
+    CardContent, CardDescription, CardAction, CardTitle, CardFooter, FormMessage,
 } from "@/components/primitives";
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+    password: z.string().min(8, { message: "Password must be at least 8 characters" }),
 });
 
 const registerSchema = loginSchema.extend({
@@ -42,19 +45,28 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
     });
 
     return (
-        <div className="min-h-svh w-svw flex items-center justify-center bg-background text-foreground p-4">
-            <div className="w-full max-w-md rounded-2xl border bg-card text-card-foreground shadow-lg p-6">
+        <Card className="w-full">
+            <CardHeader>
+                <CardTitle>{mode === "login" ? "Login to your account" : "Create an account"}</CardTitle>
+                <CardDescription>
+                    {mode === "login"
+                        ? "Enter your email below to login to your account"
+                        : "Enter your details to sign up"}
+                </CardDescription>
+
+            </CardHeader>
+            <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         {mode === "register" && (
                             <FormField
                                 control={form.control}
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-foreground">Name</FormLabel>
+                                        <FormLabel>Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Your name" className="bg-background" {...field} />
+                                            <Input placeholder="Your name" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -67,9 +79,9 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
                             name="email"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-foreground">Email</FormLabel>
+                                    <FormLabel>Email</FormLabel>
                                     <FormControl>
-                                        <Input type="email" placeholder="you@example.com" className="bg-background" {...field} />
+                                        <Input type="email" placeholder="m@example.com" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -81,21 +93,32 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
                             name="password"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-foreground">Password</FormLabel>
+                                    <div className="flex items-center">
+                                        <FormLabel>Password</FormLabel>
+                                        {mode === "login" && (
+                                            <a
+                                                href="#"
+                                                className="ml-auto inline-block text-sm underline underline-offset-4 text-pink-500 hover:text-pink-600"
+                                            >
+                                                Forgot your password?
+                                            </a>
+                                        )}
+                                    </div>
                                     <FormControl>
-                                        <Input type="password" placeholder="********" className="bg-background" {...field} />
+                                        <Input type="password" placeholder="********" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <Button type="submit" className="w-full">
-                            {mode === "login" ? "Log In" : "Register"}
+                        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">
+                            {mode === "login" ? "Login" : "Register"}
                         </Button>
                     </form>
                 </Form>
-            </div>
-        </div>
+            </CardContent>
+            <CardFooter className="flex-col gap-2" />
+        </Card>
     );
 }
