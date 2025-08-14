@@ -9,12 +9,10 @@ import {
     createConfidential,
     readConfidential,
     writeConfidential,
-} from "./files.js";
+} from "./files";
 import { hashPassword, verifyPassword, verifyTotp } from "./crypto.js";
 
 
-
-/* ---------- Helpers ---------- */
 
 function json(res: ServerResponse, code: number, data: unknown): void {
     res.writeHead(code, { "Content-Type": "application/json" });
