@@ -1,6 +1,6 @@
 import http, { IncomingMessage, ServerResponse } from "http";
 import { URL } from "url";
-import { db, migrate } from "./db.js";
+import { db, migrate } from "./db/db";
 import { authorize } from "./rbac.js";
 import { newSession, getSession, setCookieSid } from "./sessions.js";
 import {

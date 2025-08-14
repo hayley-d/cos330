@@ -4,7 +4,7 @@ import path from 'path';
 import type { UUID } from "node:crypto";
 
 import { encConfidential, decConfidential } from './crypto.js';
-import { my_database } from './db.js';
+import { my_database } from './db/db';
 import type { Kind, FileRow } from './types';
 
 const ROOT = path.resolve('data');

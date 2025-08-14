@@ -32,8 +32,9 @@ CREATE TABLE IF NOT EXISTS users (
     failed_login_attempts INTEGER NOT NULL DEFAULT 0 CHECK (failed_login_attempts >= 0),
     current_sign_in_ip VARCHAR(50) DEFAULT NULL,
     last_sign_in_ip VARCHAR(50) DEFAULT NULL,
-    role_id VARCHAR(36) REFERENCES roles(role_id) ON UPDATE CASCADE,
+    role_id VARCHAR(36) NOT NULL REFERENCES roles(role_id) ON UPDATE CASCADE,
     mfa_totp_secret TEXT DEFAULT NULL,
+    mfa_enrolled_at INTEGER DEFAULT NULL,
     CHECK (length(user_id) = 36
         AND substr(user_id, 9, 1)  = '-'
         AND substr(user_id, 14, 1) = '-'
@@ -74,6 +75,19 @@ CREATE TABLE IF NOT EXISTS asset (
     asset_id VARCHAR(36) PRIMARY KEY,
     description TEXT,
     asset_type VARCHAR(50) NOT NULL,
+
+    file_name VARCHAR(255),
+    mime_type VARCHAR(100) NOT NULL,
+    size_bytes INTEGER NOT NULL CHECK (size_bytes >= 0),
+    sha256 VARCHAR(64) NOT NULL, -- hex content hash for deupe/integrity
+
+    content BLOB,
+
+    payload_ciphertext BLOB, -- AES-GCM ciphertext
+    payload_nonce BLOB, -- 12 bytes
+    payload_tag BLOB, -- auth tag 16 bytes
+    key_id VARCHAR(20) NOT NULL DEFAULT 'v1',
+
     created_at INTEGER NOT NULL DEFAULT unixepoch(),
     updated_at INTEGER,
     deleted_at INTEGER,
@@ -84,16 +98,30 @@ CREATE TABLE IF NOT EXISTS asset (
     FOREIGN KEY (deleted_by) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE CASCADE,
     CHECK (length(asset_id) = 36
-    AND substr(asset_id, 9, 1)  = '-'
-    AND substr(asset_id, 14, 1) = '-'
-    AND substr(asset_id, 19, 1) = '-'
-    AND substr(asset_id, 24, 1) = '-'
-    AND substr(asset_id, 15, 1) = '4'
-    AND lower(substr(asset_id, 20, 1)) IN ('8','9','a','b')
+        AND substr(asset_id, 9, 1)  = '-'
+        AND substr(asset_id, 14, 1) = '-'
+        AND substr(asset_id, 19, 1) = '-'
+        AND substr(asset_id, 24, 1) = '-'
+        AND substr(asset_id, 15, 1) = '4'
+        AND lower(substr(asset_id, 20, 1)) IN ('8','9','a','b')
+    ),
+    CHECK (
+      CASE
+      WHEN asset_type = 'confidential' THEN
+          content IS NULL
+          AND payload_ciphertext IS NOT NULL
+          AND payload_nonce IS NOT NULL
+          AND payload_tag IS NOT NULL
+      ELSE
+          content IS NOT NULL
+          AND payload_ciphertext IS NULL
+          AND payload_nonce IS NULL
+          AND payload_tag IS NULL
+      END
     )
 );
 
-CREATE INDEX IF NOT EXISTS idx_asset_id ON asset(asset_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_asset_sha256 ON asset(sha256);
 CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(asset_type);
 
 INSERT INTO roles (role_id, role_name, role_description, permissions) VALUES
@@ -132,7 +160,6 @@ INSERT INTO users (
     sign_in_count,
     failed_login_attempts,
     role_id,
-    mfa_enabled
 ) VALUES (
           '55555555-5555-4555-8555-555555555555',
         'Super',

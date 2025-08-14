@@ -8,7 +8,9 @@ createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <BrowserRouter>
             <Routes>
-                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/otp" element={<AuthPage />} />
+                <Route path="/otp" element={<AuthPage />} />
             </Routes>
         </BrowserRouter>
     </StrictMode>

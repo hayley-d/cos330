@@ -16,7 +16,7 @@ export const AuthLayout: FC<ChildrenProps> = ({ children }) => (
 
         <div className="relative hidden lg:block">
             <img
-                src="/sloth.webp"
+                src="/iron-man.jpg"
                 alt="auth"
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 loading="lazy"
