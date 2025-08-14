@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import otplib, {authenticator} from 'otplib';
+import {authenticator} from 'otplib';
 
 import type { DB } from "../db/db"
 import type { UUID, Email } from "../types";
