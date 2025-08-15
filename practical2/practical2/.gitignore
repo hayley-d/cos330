@@ -1,5 +1,6 @@
 # Node modules in root and all subdirectories
 **/node_modules/
+**/.env
 
 # Logs
 logs
