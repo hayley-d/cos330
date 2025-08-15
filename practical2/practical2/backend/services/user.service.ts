@@ -3,7 +3,7 @@ import { authenticator } from "otplib";
 
 import type {DB} from "../db/db";
 import type {UUID} from "../types";
-import type {OtpSecret, ValidateEmailOption, ValidatePasswordOption} from "../types/user.types";
+import type {OtpSecret, ValidateEmailOption, CreateUserDTO, ValidatePasswordOption} from "../types/user.types";
 
 export const EMAIL_MAX_LEN = 254;
 export const LOCAL_MAX_LEN = 64;
@@ -87,4 +87,24 @@ export function generateTotpSecret(email: string, issuer = "Hayley"): OtpSecret 
 
 export function verifyTotpToken(secret: string, token: string): boolean {
     return authenticator.verify({ token, secret });
+}
+
+export function validateCreateUserDto(body: any) : { ok: boolean, error?: string, data?: CreateUserDTO } {
+    if (typeof body.first_name !== "string" || body.first_name.trim() === "") {
+        return { ok: false, error: "Invalid first name" }
+    }
+
+    if (typeof body.last_name !== "string" || body.last_name.trim() === "") {
+        return { ok: false, error: "Invalid last name" }
+    }
+
+    if (typeof body.email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+        return { ok: false, error: "Invalid email" };
+    }
+
+    if (typeof body.password !== "string" || body.password.length < 8) {
+        return { ok: false, error: "Password must be at least 8 characters" };
+    }
+
+    return { ok: true, data: body as CreateUserDTO };
 }
