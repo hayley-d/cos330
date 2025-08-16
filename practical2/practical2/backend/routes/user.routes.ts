@@ -3,7 +3,7 @@ import { Router } from "express";
 import type { Request } from "express";
 
 import { authMiddleware } from "../middleware/auth.middleware";
-import type { DB } from "../db/db";
+import type { APPLICATION_DB as DB } from "../db/db";
 import {
   createUser,
   login,
@@ -38,7 +38,7 @@ export default function userRoutes(db: DB) {
       const parsed = CreateUserDTOSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten });
+        return res.status(400).json({ error: parsed.error.flatten });
       }
 
       const result: MfaResponse = await createUser(db, req.body);
@@ -47,9 +47,9 @@ export default function userRoutes(db: DB) {
         return res.status(400).json({ error: result.error });
       }
 
-      res.status(201).json({ user_email: result.user_email, url: result.url });
+      return res.status(201).json({ user_email: result.user_email, url: result.url });
     } catch (err) {
-      res.status(500).json({ ok: false, error: "Internal server error" });
+      return res.status(500).json({ ok: false, error: "Internal server error" });
     }
   });
 
@@ -60,7 +60,7 @@ export default function userRoutes(db: DB) {
         const parsed = ValidateMfaSchema.safeParse(req.body);
 
         if (!parsed.success) {
-          res.status(400).json({ error: parsed.error.flatten });
+          return res.status(400).json({ error: parsed.error.flatten });
         }
 
         const result = await validateMfa(db, req.body);
@@ -69,9 +69,9 @@ export default function userRoutes(db: DB) {
           return res.status(400).json({ error: result.error });
         }
 
-        res.status(200);
+        return res.status(200);
       } catch (err) {
-        res.status(500).json({ ok: false, error: "Internal server error" });
+        return res.status(500).json({ ok: false, error: "Internal server error" });
       }
     },
   );
@@ -80,7 +80,7 @@ export default function userRoutes(db: DB) {
     const parsed = UserLoginSchema.safeParse(req.body);
 
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten });
+      return res.status(400).json({ error: parsed.error.flatten });
     }
 
     const result: RequestUserOption = await login(db, req.body);
@@ -89,7 +89,7 @@ export default function userRoutes(db: DB) {
       return res.status(400).json(result);
     }
 
-    res
+    return res
       .status(200)
       .json({
         mfa_required: true,
@@ -104,7 +104,7 @@ export default function userRoutes(db: DB) {
       const parsed = ValidateOtpSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten });
+        return res.status(400).json({ error: parsed.error.flatten });
       }
 
       const result = await validateUserOtp(db, req.body);
@@ -123,13 +123,11 @@ export default function userRoutes(db: DB) {
         { expiresIn: "1h" },
       );
 
-      res.json({
+      return res.json({
         ok: true,
         user: result.user,
         token,
       });
-
-      res.json(result);
     },
   );
 
@@ -140,7 +138,7 @@ export default function userRoutes(db: DB) {
       const parsed = ApproveUserSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten });
+        return res.status(400).json({ error: parsed.error.flatten });
       }
 
       const result = await approveUser(db, req.body);
@@ -149,7 +147,7 @@ export default function userRoutes(db: DB) {
         return res.status(404).json(result.error);
       }
 
-      res.status(200);
+      return res.status(200);
     },
   );
 
@@ -160,7 +158,7 @@ export default function userRoutes(db: DB) {
       const parsed = UpdateUserRoleSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten });
+        return res.status(400).json({ error: parsed.error.flatten });
       }
 
       const result = await approveUser(db, req.body);
@@ -169,7 +167,9 @@ export default function userRoutes(db: DB) {
         return res.status(404).json(result.error);
       }
 
-      res.status(200);
+      return res.status(200);
     },
   );
+
+  return router;
 }

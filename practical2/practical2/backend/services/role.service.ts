@@ -1,6 +1,6 @@
 import type { Role, RolesRow } from "../db/types";
 import { parsePermissions } from "./db.service";
-import type { DB } from "../db/db";
+import type { APPLICATION_DB as DB } from "../db/db";
 import type { UUID } from "../types";
 
 export function roleFromRow(row: RolesRow): Role {

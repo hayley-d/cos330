@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { authenticator } from "otplib";
 
-import type { DB } from "../db/db";
+import type { APPLICATION_DB as DB } from "../db/db";
 import type { UUID } from "../types";
 import type {
   OtpSecret,

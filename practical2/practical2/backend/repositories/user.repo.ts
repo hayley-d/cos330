@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { authenticator } from "otplib";
-
-import type { DB } from "../db/db";
+import type { APPLICATION_DB as DB } from "../db/db"
 import type { UUID, Email } from "../types";
 import { userFromRow } from "../types";
 import {

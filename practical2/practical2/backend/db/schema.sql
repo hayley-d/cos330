@@ -1,7 +1,5 @@
 PRAGMA foreign_keys = ON;
 
-BEGIN;
-
 CREATE TABLE IF NOT EXISTS roles (
     role_id VARCHAR(36) PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL UNIQUE,
@@ -25,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(50) NOT NULL COLLATE NOCASE UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at INTEGER NOT NULL DEFAULT unixepoch(),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     last_login INTEGER DEFAULT NULL,
     is_approved INTEGER NOT NULL DEFAULT 0 CHECK (is_approved IN (0,1)),
     sign_in_count INTEGER NOT NULL DEFAULT 0 CHECK (sign_in_count >= 0),
@@ -64,7 +62,7 @@ CREATE TABLE IF NOT EXISTS user_otp_challenges (
     code_hash TEXT NOT NULL,
     expires_at INTEGER NOT NULL,
     attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
-    created_at INTEGER NOT NULL DEFAULT unixepoch(),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     PRIMARY KEY (user_id, purpose),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
@@ -88,7 +86,7 @@ CREATE TABLE IF NOT EXISTS asset (
     payload_tag BLOB, -- auth tag 16 bytes
     key_id VARCHAR(20) NOT NULL DEFAULT 'v1',
 
-    created_at INTEGER NOT NULL DEFAULT unixepoch(),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER,
     deleted_at INTEGER,
     created_by VARCHAR(36) NOT NULL,
@@ -106,18 +104,17 @@ CREATE TABLE IF NOT EXISTS asset (
         AND lower(substr(asset_id, 20, 1)) IN ('8','9','a','b')
     ),
     CHECK (
-      CASE
-      WHEN asset_type = 'confidential' THEN
-          content IS NULL
-          AND payload_ciphertext IS NOT NULL
-          AND payload_nonce IS NOT NULL
-          AND payload_tag IS NOT NULL
-      ELSE
-          content IS NOT NULL
-          AND payload_ciphertext IS NULL
-          AND payload_nonce IS NULL
-          AND payload_tag IS NULL
-      END
+        (asset_type = 'confidential'
+         AND content IS NULL
+         AND payload_ciphertext IS NOT NULL
+         AND payload_nonce IS NOT NULL
+         AND payload_tag IS NOT NULL)
+            OR
+        (asset_type <> 'confidential'
+         AND content IS NOT NULL
+         AND payload_ciphertext IS NULL
+         AND payload_nonce IS NULL
+         AND payload_tag IS NULL)
     )
 );
 
@@ -159,7 +156,7 @@ INSERT INTO users (
     is_approved,
     sign_in_count,
     failed_login_attempts,
-    role_id,
+    role_id
 ) VALUES (
           '55555555-5555-4555-8555-555555555555',
         'Super',
@@ -170,7 +167,5 @@ INSERT INTO users (
              1,
              0,
              0,
-             '11111111-1111-4111-8111-111111111111',
+             '11111111-1111-4111-8111-111111111111'
 );
-
-COMMIT;

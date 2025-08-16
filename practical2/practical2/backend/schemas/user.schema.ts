@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { Email, IPAddr } from "../types";
 
 export const CreateUserDTOSchema = z.object({
   first_name: z.string().min(1),

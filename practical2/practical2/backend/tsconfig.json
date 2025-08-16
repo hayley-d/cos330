@@ -6,7 +6,8 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "ESNext",
+    "module": "CommonJS",
+//    "module": "ESNext",
     "moduleResolution": "Node",
     "target": "ES2022",
     // For nodejs:
@@ -35,7 +36,7 @@
     "esModuleInterop": true,
     "strict": true,
     "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
+    //"verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
