@@ -69,6 +69,18 @@ CREATE TABLE IF NOT EXISTS user_otp_challenges (
 
 CREATE INDEX IF NOT EXISTS idx_otp_expires ON user_otp_challenges(expires_at);
 
+CREATE TABLE IF NOT EXISTS request_log (
+    request_id VARCHAR(36) NOT NULL PRIMARY KEY,
+    endpoint VARCHAR(50) NOT NULL,
+    origin_ip VARCHAR(50) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    success INTEGER NOT NULL DEFAULT 0 CHECK (success IN (0,1)),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_endpoint ON request_log(endpoint);
+
 CREATE TABLE IF NOT EXISTS asset (
     asset_id VARCHAR(36) PRIMARY KEY,
     description TEXT,
