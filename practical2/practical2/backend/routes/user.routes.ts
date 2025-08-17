@@ -33,7 +33,7 @@ import {
 const router = Router();
 
 export default function userRoutes(db: DB) {
-  router.post("/", async (req: Request<{}, {}, CreateUserDTO>, res) => {
+  router.post("/register", async (req: Request<{}, {}, CreateUserDTO>, res) => {
     try {
       const parsed = CreateUserDTOSchema.safeParse(req.body);
 
@@ -54,7 +54,7 @@ export default function userRoutes(db: DB) {
   });
 
   router.post(
-    "/validate",
+    "/two_factor",
     async (req: Request<{}, {}, ValidateMfaDto>, res) => {
       try {
         const parsed = ValidateMfaSchema.safeParse(req.body);
@@ -99,7 +99,7 @@ export default function userRoutes(db: DB) {
   });
 
   router.post(
-    "/validate-otp",
+    "/verify",
     async (req: Request<{}, {}, ValidateOtpDto>, res) => {
       const parsed = ValidateOtpSchema.safeParse(req.body);
 
