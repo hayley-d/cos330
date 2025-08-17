@@ -6,8 +6,8 @@ import {
     assetFromRow,
     AssetListOptions,
     CreateAssetProps,
-    CreateConfidentialAssetProps,
-    GetAssetOption, PatchConfAssetRequest,
+    CreateConfidentialAssetProps, DeleteAssetProps,
+    GetAssetOption, PatchAssetRequest, PatchConfAssetRequest,
     RequestAssetOption,
     RequestOption
 } from "../types/asset.types";
@@ -224,9 +224,10 @@ export async function getAssetBytes(
  * @param db
  * @param assetId
  */
-export async function softDeleteAsset(db: DB, assetId: UUID): Promise<RequestOption> {
-  const result = await db.run(`UPDATE asset SET deleted_at = unixepoch() WHERE asset_id = ? AND deleted_at IS NULL`, [
-    assetId,
+export async function softDeleteAsset(db: DB, props: DeleteAssetProps): Promise<RequestOption> {
+  const result = await db.run(`UPDATE asset SET deleted_by = ?, deleted_at = unixepoch() WHERE asset_id = ? AND deleted_at IS NULL`, [
+    props.deletedBy,
+    props.assetId,
   ]);
 
   if (!result) {
@@ -240,14 +241,15 @@ export async function softDeleteAsset(db: DB, assetId: UUID): Promise<RequestOpt
   return { ok: true };
 }
 
+/**
+ * Updates an image or document asset.
+ * @param db
+ * @param patch
+ */
 export async function updateAssetMeta(
   db: DB,
-  assetId: UUID,
-  patch: {
-    description?: string | null;
-    fileName?: string | null;
-  },
-): Promise<void> {
+  patch: PatchAssetRequest,
+): Promise<RequestOption> {
   const sets: string[] = [];
   const vals: any[] = [];
   const push = (c: string, v: any) => {
@@ -257,13 +259,29 @@ export async function updateAssetMeta(
 
   if (patch.description !== undefined) push("description", patch.description);
   if (patch.fileName !== undefined) push("file_name", patch.fileName);
+  if (patch.content !== undefined) {
+      const sha = sha256Hex(patch.content);
+      push("content", patch.content);
+      push("size_bytes",patch.content.length)
+      push("sha256", sha)
+  }
+  push("mime_type", patch.mimeType);
+  push("updated_by", patch.updatedBy);
 
-  if (sets.length === 0) return;
-  vals.push(assetId);
-  await db.run(
+  if (sets.length === 0) {
+      return { ok: false, error: "Unable to update asset. No values provided to update." };
+  }
+
+  vals.push(patch.assetId);
+  const result = await db.run(
     `UPDATE asset SET ${sets.join(", ")}, updated_at = unixepoch() WHERE asset_id = ?`,
     vals,
   );
+  if (!result || result.changes === 0) {
+      return { ok: false, error: "Unable to update asset." };
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -282,6 +300,8 @@ export async function updateConfidentialAsset(
         sets.push(`${c} = ?`);
         vals.push(v);
     };
+
+    push("updated_by", asset.updatedBy);
 
     if (asset.description) {
         push("description", asset.description);

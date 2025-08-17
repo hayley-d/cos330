@@ -6,10 +6,17 @@ import {
     createPublicAsset,
     getAssetBytes,
     listAssets as repoListAsset, softDeleteAsset,
-    updateAssetMeta
+    updateAssetMeta,
+    updateConfidentialAsset as updateConfidentialAssetRepo
 } from "../repositories/asset.repo";
 
-import {AssetListOptions, CreateAssetRequest, RequestAssetOption, RequestOption} from "../types/asset.types";
+import {
+    AssetListOptions,
+    CreateAssetRequest, DeleteAssetProps,
+    PatchAssetRequest, PatchConfAssetRequest,
+    RequestAssetOption,
+    RequestOption
+} from "../types/asset.types";
 import {Asset} from "../db/types";
 
 export async function createAsset(
@@ -54,12 +61,18 @@ export async function listAssets(
 
 export async function updateAsset(
     db: DB,
-    assetId: UUID,
-    patch: { description?: string | null; fileName?: string | null },
-) {
-    return updateAssetMeta(db, assetId, patch);
+    patch: PatchAssetRequest,
+): Promise<RequestOption> {
+    return updateAssetMeta(db, patch);
 }
 
-export async function deleteAsset(db: DB, assetId: UUID) : Promise<RequestOption> {
-    return softDeleteAsset(db, assetId);
+export async function updateConfidentialAsset(
+    db: DB,
+    asset: PatchConfAssetRequest
+) : Promise<RequestOption> {
+    return updateConfidentialAssetRepo(db, asset);
+}
+
+export async function deleteAsset(db: DB, props: DeleteAssetProps) : Promise<RequestOption> {
+    return softDeleteAsset(db, props);
 }

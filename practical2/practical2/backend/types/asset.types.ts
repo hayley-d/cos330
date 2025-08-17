@@ -14,11 +14,11 @@ export type RequestAssetOption = {
 
 export type CreateConfidentialAssetProps = {
     assetId: UUID;
-    fileName?: string | null;
+    fileName: string;
     mimeType: string;
     bytes: Buffer;
     createdBy: UUID;
-    description?: string | null;
+    description: string;
     keyId?: string;
 }
 
@@ -27,6 +27,11 @@ export type GetAssetOption = {
     error?: string;
     mimeType?: string;
     bytes?: Buffer;
+}
+
+export type DeleteAssetProps = {
+    assetId: UUID;
+    deletedBy: UUID;
 }
 
 export type CreateAssetProps = {
@@ -48,6 +53,17 @@ export type CreateAssetRequest = {
     assetType: Resource;
 }
 
+
+export type PatchAssetRequest = {
+    assetId: UUID;
+    fileName?: string;
+    mimeType: string;
+    content?: Buffer;
+    updatedBy: UUID;
+    description?: string;
+    assetType: Exclude<Resource, "confidential">;
+}
+
 export type AssetListOptions = {
     type?: Resource;
     limit?: number;
@@ -55,6 +71,7 @@ export type AssetListOptions = {
 }
 
 export type PatchConfAssetRequest = {
+    updatedBy: UUID;
     assetId: UUID;
     content?: string;
     fileName?: string;
