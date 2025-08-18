@@ -72,3 +72,21 @@
 // export async function deleteRole(db: DB, roleId: UUID): Promise<void> {
 //   await db.run(`DELETE FROM roles WHERE role_id = ?`, [roleId]);
 // }
+
+import type {APPLICATION_DB as DB} from "../db/db";
+import {RoleOption} from "../types/role.types";
+import {Role} from "../schemas/roles.schema";
+
+export async function getRoleByName(db: DB, role_name: string): Promise<RoleOption> {
+    const row: Role | undefined = await db.get<Role>(
+        `SELECT * FROM roles WHERE role_name = ?`,
+        [role_name],
+    );
+
+    if (!row) {
+        console.error("No role found for role name", role_name);
+        return { ok: false, error: "Failed to find role"}
+    }
+
+    return { ok: true, role: row };
+}

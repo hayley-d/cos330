@@ -27,14 +27,6 @@ function isInitialized(): boolean {
   return !!row;
 }
 
-// export function migrate(): void {
-//   if (!isInitialized()) {
-//     console.log("Applying migrations......")
-//     const schema = fs.readFileSync(SCHEMA_FILE, "utf8");
-//     db.exec(schema);
-//   }
-// }
-
 export function migrate(): void {
   function isInitialized(): boolean {
     const row = db.prepare(

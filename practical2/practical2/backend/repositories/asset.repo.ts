@@ -11,6 +11,7 @@ import {
     RequestAssetOption,
     RequestOption
 } from "../types/asset.types";
+import {DeleteConfidentialDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
 
 const MASTER_KEY_HEX = process.env.MASTER_KEY;
 if (!MASTER_KEY_HEX) {
@@ -222,12 +223,12 @@ export async function getAssetBytes(
 /**
  * Soft deletes an asset from the database.
  * @param db
- * @param assetId
+ * @param props
  */
-export async function softDeleteAsset(db: DB, props: DeleteAssetProps): Promise<RequestOption> {
+export async function softDeleteAsset(db: DB, props: DeleteConfidentialDto): Promise<RequestOption> {
   const result = await db.run(`UPDATE asset SET deleted_by = ?, deleted_at = unixepoch() WHERE asset_id = ? AND deleted_at IS NULL`, [
-    props.deletedBy,
-    props.assetId,
+    props.deleted_by,
+    props.asset_id,
   ]);
 
   if (!result) {
@@ -291,7 +292,7 @@ export async function updateAssetMeta(
  */
 export async function updateConfidentialAsset(
     db: DB,
-    asset: PatchConfAssetRequest
+    asset: UpdateConfidentialAsset
 ): Promise<RequestOption> {
     const sets: string[] = [];
     const vals: string[] = [];
@@ -301,22 +302,22 @@ export async function updateConfidentialAsset(
         vals.push(v);
     };
 
-    push("updated_by", asset.updatedBy);
+    push("updated_by", asset.updated_by);
 
     if (asset.description) {
         push("description", asset.description);
     }
 
-    if (asset.fileName) {
-        push("file_name", asset.fileName);
+    if (asset.file_name) {
+        push("file_name", asset.file_name);
     }
 
     if (asset.content) {
         const keyId = "v1";
-        const dataKey = hkdf32(MASTER_KEY, keyId, asset.assetId);
+        const dataKey = hkdf32(MASTER_KEY, keyId, asset.asset_id);
         const nonce = crypto.randomBytes(12);
         const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-        const aad = Buffer.from(`${asset.assetId}|confidential|txt`, "utf8");
+        const aad = Buffer.from(`${asset.asset_id}|confidential|txt`, "utf8");
         cipher.setAAD(aad);
         const ciphertext = Buffer.concat([cipher.update(asset.content), cipher.final()]);
         const tag = cipher.getAuthTag();
@@ -330,7 +331,7 @@ export async function updateConfidentialAsset(
         return { ok: false, error: "Nothing to update." }
     }
 
-    vals.push(asset.assetId);
+    vals.push(asset.asset_id);
 
     const result = await db.run(
         `UPDATE asset SET ${sets.join(", ")}, updated_at = unixepoch() WHERE asset_id = ?`,

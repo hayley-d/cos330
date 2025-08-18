@@ -7,13 +7,6 @@ import type {
   UUID,
 } from "../types";
 
-export interface RolesRow {
-  role_id: UUID;
-  role_name: string;
-  role_description: string;
-  permissions: string;
-}
-
 export interface UsersRow {
   user_id: UUID;
   first_name: string;
@@ -72,13 +65,6 @@ export interface AssetRow {
   deleted_by: UUID | null;
   updated_by: UUID | null;
 }
-
-export type Role = {
-  roleId: UUID;
-  name: string;
-  description: string;
-  permissions: Permissions;
-};
 
 export type User = {
   userId: UUID;
