@@ -30,12 +30,12 @@ import {
     ValidateOtpSchema,
 } from "../schemas/user.schema";
 import {
-    confPatchSchema,
-    DeleteConfidentialDto,
-    DeleteConfidentialSchema,
+    confPatchSchema, CreateAssetDto, createAssetSchema,
+    DeletAssetDto, DeleteAssetDto,
+    DeleteAssetSchema,
     UpdateConfidentialAsset
 } from "../schemas/asset.schema";
-import {deleteAsset, updateConfidentialAsset} from "../services/asset.service";
+import {createAsset, deleteAsset, updateConfidentialAsset} from "../services/asset.service";
 
 const router = Router();
 
@@ -105,36 +105,22 @@ export function imageRoutes(db: DB) {
             });
     });
 
-    router.post(
-        "/validate-otp",
-        async (req: Request<{}, {}, ValidateOtpDto>, res) => {
-            const parsed = ValidateOtpSchema.safeParse(req.body);
+     router.post(
+        "/",
+        async (req: Request<{}, {}, CreateAssetDto>, res) => {
+            const parsed = createAssetSchema.safeParse(req.body);
 
             if (!parsed.success) {
                 return res.status(400).json({ error: parsed.error.flatten });
             }
 
-            const result = await validateUserOtp(db, req.body);
+            const result = await createAsset(db, parsed.data);
 
             if (!result.ok) {
                 return res.status(400).json(result);
             }
 
-            const token = jwt.sign(
-                {
-                    user_id: result.user?.userId,
-                    user_email: result.user?.email,
-                    role_id: result.user?.roleId,
-                },
-                process.env.JWT_SECRET!,
-                { expiresIn: "1h" },
-            );
-
-            return res.json({
-                ok: true,
-                user: result.user,
-                token,
-            });
+            return res.status(201);
         },
     );
 
@@ -158,17 +144,17 @@ export function imageRoutes(db: DB) {
         },
     );
 
-    router.patch(
-        "/role",
+    router.delete(
+        "/",
         authMiddleware,
-        async (req: Request<{}, {}, UpdateUserRoleDto>, res) => {
-            const parsed = UpdateUserRoleSchema.safeParse(req.body);
+        async (req: Request<{}, {}, DeleteAssetDto>, res) => {
+            const parsed = DeleteAssetSchema.safeParse(req.body);
 
             if (!parsed.success) {
                 return res.status(400).json({ error: parsed.error.flatten });
             }
 
-            const result = await approveUser(db, req.body);
+            const result = await deleteAsset(db, req.body);
 
             if (!result.ok) {
                 return res.status(404).json(result.error);
@@ -249,35 +235,21 @@ export function documentRoutes(db: DB) {
     });
 
     router.post(
-        "/validate-otp",
-        async (req: Request<{}, {}, ValidateOtpDto>, res) => {
-            const parsed = ValidateOtpSchema.safeParse(req.body);
+        "/",
+        async (req: Request<{}, {}, CreateAssetDto>, res) => {
+            const parsed = createAssetSchema.safeParse(req.body);
 
             if (!parsed.success) {
                 return res.status(400).json({ error: parsed.error.flatten });
             }
 
-            const result = await validateUserOtp(db, req.body);
+            const result = await createAsset(db, parsed.data);
 
             if (!result.ok) {
                 return res.status(400).json(result);
             }
 
-            const token = jwt.sign(
-                {
-                    user_id: result.user?.userId,
-                    user_email: result.user?.email,
-                    role_id: result.user?.roleId,
-                },
-                process.env.JWT_SECRET!,
-                { expiresIn: "1h" },
-            );
-
-            return res.json({
-                ok: true,
-                user: result.user,
-                token,
-            });
+            return res.status(201);
         },
     );
 
@@ -301,17 +273,17 @@ export function documentRoutes(db: DB) {
         },
     );
 
-    router.patch(
-        "/role",
+    router.delete(
+        "/",
         authMiddleware,
-        async (req: Request<{}, {}, UpdateUserRoleDto>, res) => {
-            const parsed = UpdateUserRoleSchema.safeParse(req.body);
+        async (req: Request<{}, {}, DeleteAssetDto>, res) => {
+            const parsed = DeleteAssetSchema.safeParse(req.body);
 
             if (!parsed.success) {
                 return res.status(400).json({ error: parsed.error.flatten });
             }
 
-            const result = await approveUser(db, req.body);
+            const result = await deleteAsset(db, req.body);
 
             if (!result.ok) {
                 return res.status(404).json(result.error);
@@ -320,6 +292,7 @@ export function documentRoutes(db: DB) {
             return res.status(200);
         },
     );
+
 
     return router;
 }
@@ -377,34 +350,20 @@ export function confidentialRoutes(db: DB) {
      */
     router.post(
         "/",
-        async (req: Request<{}, {}, ValidateOtpDto>, res) => {
-            const parsed = ValidateOtpSchema.safeParse(req.body);
+        async (req: Request<{}, {}, CreateAssetDto>, res) => {
+            const parsed = createAssetSchema.safeParse(req.body);
 
             if (!parsed.success) {
                 return res.status(400).json({ error: parsed.error.flatten });
             }
 
-            const result = await validateUserOtp(db, req.body);
+            const result = await createAsset(db, parsed.data);
 
             if (!result.ok) {
                 return res.status(400).json(result);
             }
 
-            const token = jwt.sign(
-                {
-                    user_id: result.user?.userId,
-                    user_email: result.user?.email,
-                    role_id: result.user?.roleId,
-                },
-                process.env.JWT_SECRET!,
-                { expiresIn: "1h" },
-            );
-
-            return res.json({
-                ok: true,
-                user: result.user,
-                token,
-            });
+            return res.status(201);
         },
     );
 
@@ -433,8 +392,8 @@ export function confidentialRoutes(db: DB) {
     router.delete(
         "/",
         authMiddleware,
-        async (req: Request<{}, {}, DeleteConfidentialDto>, res) => {
-            const parsed = DeleteConfidentialSchema.safeParse(req.body);
+        async (req: Request<{}, {}, DeleteAssetDto>, res) => {
+            const parsed = DeleteAssetSchema.safeParse(req.body);
 
             if (!parsed.success) {
                 return res.status(400).json({ error: parsed.error.flatten });

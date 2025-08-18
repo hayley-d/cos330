@@ -175,7 +175,7 @@ export async function getAssetBytes(
   db: DB,
   assetId: UUID,
 ): Promise<GetAssetOption> {
-  const row = await db.get<AssetRow>(
+  const row = await db.get<Asset>(
     `SELECT mime_type, asset_type, content,
             payload_ciphertext, payload_nonce, payload_tag, key_id
      FROM asset WHERE asset_id = ? AND deleted_at IS NULL`,

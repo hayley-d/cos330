@@ -1,9 +1,18 @@
 import { z } from "zod";
-import {Resource, UUID} from "../types";
 
 const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export const DeleteConfidentialSchema = z.object({
+function sanitizeString(input: string): string {
+    return input
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;")
+        .replace(/\//g, "&#x2F;");
+}
+
+export const DeleteAssetSchema = z.object({
     asset_id: z
         .string()
         .regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
@@ -20,8 +29,8 @@ export const confPatchSchema = z.object({
         .string()
         .regex(uuidV4Regex, "updated_by must be a valid UUID v4"),
     content: z.instanceof(Buffer).optional(),
-    file_name: z.string().max(255).optional(),
-    description: z.string().optional()
+    file_name: z.string().max(255).transform(sanitizeString).optional(),
+    description: z.string().transform(sanitizeString).optional()
 });
 
 
@@ -30,11 +39,11 @@ export const assetSchema = z.object({
             .string()
             .regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
 
-        description: z.string().nullable().optional(),
+        description: z.string().transform(sanitizeString).nullable().optional(),
 
         asset_type: z.enum(["image", "document", "confidential"]),
 
-        file_name: z.string().max(255).nullable().optional(),
+        file_name: z.string().max(255).transform(sanitizeString).nullable().optional(),
         mime_type: z.string().max(100),
 
         size_bytes: z
@@ -83,16 +92,17 @@ export const assetSchema = z.object({
 
 
 export const createAssetSchema = z.object({
-    file_name: z.string().max(50),
+    file_name: z.string().max(50).transform(sanitizeString),
     mime_type: z.string().max(100),
     content: z.instanceof(Buffer),
     created_by: z.string().regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
-    description: z.string().max(255),
+    description: z.string().max(255).transform(sanitizeString),
     asset_type: z.enum(["image", "document", "confidential"]),
     key_id: z.string().max(100).optional().default("v1"),
 })
 
-export type DeleteConfidentialDto = z.infer<typeof DeleteConfidentialSchema>;
+export type DeleteAssetDto = z.infer<typeof DeleteAssetSchema>;
 export type Asset = z.infer<typeof assetSchema>;
 export type CreateAssetDto = z.infer<typeof createAssetSchema>;
 export type UpdateConfidentialAsset = z.infer<typeof confPatchSchema>;
+

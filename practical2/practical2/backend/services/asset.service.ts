@@ -16,9 +16,11 @@ import {
     RequestOption
 } from "../types/asset.types";
 import { User } from "../db/types";
-import {CreateAssetDto, DeleteConfidentialDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
+import {CreateAssetDto, DeleteAssetDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
 import { getUserById } from "../repositories/user.repo";
 import { roleHasPermission } from "../repositories/role.repo";
+
+
 
 export async function createAsset(
     db: DB,
@@ -102,14 +104,29 @@ export async function updateConfidentialAsset(
  * @param db
  * @param props
  */
-export async function deleteAsset(db: DB, props: DeleteConfidentialDto) : Promise<RequestOption> {
+export async function deleteAsset(db: DB, props: DeleteAssetDto) : Promise<RequestOption> {
     const user: User | null = await getUserById(db, props.deleted_by as UUID)
+    const asset = await getAsset(db, props.asset_id as UUID)
+
+    if(!asset) {
+        return { ok: false, error: "Failed to find asset to delete." };
+    }
 
     if (!user) {
         return { ok: false, error: "Failed to find user that requested delete operation." };
     }
 
-    const hasPermissions = await roleHasPermission(db, user.roleId, "delete_conf")
+    let permission = "";
+    if (asset.asset && asset.asset.asset_type == "image") {
+        permission = "delete_image";
+    } else if (asset.asset && asset.asset.asset_type === "document") {
+        permission = "delete_doc"
+    }
+    else {
+        permission = "delete_conf"
+    }
+
+    const hasPermissions = await roleHasPermission(db, user.roleId, permission)
 
     if (!hasPermissions) {
         return { ok: false, error: "Failed to delete asset, the user does not have permission." };
