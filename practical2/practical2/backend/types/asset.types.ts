@@ -1,5 +1,5 @@
-import {Asset, AssetRow, type User, type UsersRow} from "../db/types";
 import {Resource, UUID} from "../types";
+import {Asset} from "../schemas/asset.schema";
 
 export type RequestOption = {
     ok: boolean;

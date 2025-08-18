@@ -1,17 +1,20 @@
-import type { APPLICATION_DB as DB } from "../db/db";
+import type {APPLICATION_DB as DB} from "../db/db";
 import crypto from "crypto";
-import {Resource, UUID} from "../types";
-import {Asset, AssetRow} from "../db/types";
+import {UUID} from "../types";
 import {
-    assetFromRow,
     AssetListOptions,
-    CreateAssetProps,
-    CreateConfidentialAssetProps, DeleteAssetProps,
-    GetAssetOption, PatchAssetRequest, PatchConfAssetRequest,
+    GetAssetOption,
+    PatchAssetRequest,
     RequestAssetOption,
     RequestOption
 } from "../types/asset.types";
-import {DeleteConfidentialDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
+import {
+    Asset,
+    assetSchema,
+    CreateAssetDto,
+    DeleteConfidentialDto,
+    UpdateConfidentialAsset
+} from "../schemas/asset.schema";
 
 const MASTER_KEY_HEX = process.env.MASTER_KEY;
 if (!MASTER_KEY_HEX) {
@@ -46,17 +49,14 @@ function hkdf32(masterKey: Buffer, keyId: string, assetId: string): Buffer {
 }
 
 export async function getAsset(db: DB, assetId: UUID): Promise<RequestAssetOption> {
-  const row : AssetRow | undefined = await db.get<AssetRow>(`SELECT * FROM asset WHERE asset_id = ?`, [
-    assetId,
-  ]);
-
+  const row : Asset | undefined = await db.get<Asset>(`SELECT * FROM asset WHERE asset_id = ?`, [assetId,]);
   if (!row) {
       return { ok: false, error: "Failed to find asset" }
   }
 
-  const asset : Asset | undefined = assetFromRow(row);
+  const parsed = assetSchema.parse(row);
 
-  return asset ? { ok : true, asset: asset } : { ok: false, error: "Error fetching asset from the database" };
+  return parsed ? { ok : true, asset: parsed } : { ok: false, error: "Error fetching asset from the database" };
 }
 
 export async function listAssets(
@@ -65,7 +65,7 @@ export async function listAssets(
 ): Promise<Asset[]> {
   const { type, limit = 10, offset = 0 } = opts;
 
-  const rows = await db.all<AssetRow>(
+  const rows = await db.all<Asset>(
     `SELECT * FROM asset
        ${type ? "WHERE asset_type = ?" : ""}
        ORDER BY created_at DESC
@@ -73,19 +73,21 @@ export async function listAssets(
     type ? [type, limit, offset] : [limit, offset],
   );
 
-  return rows.map(row => assetFromRow(row));
+  return rows.map(row => assetSchema.parse(row));
 }
 
 /**
  * Created a public asset type being either a document or image.
  * @param db
+ * @param assetId
  * @param asset
  */
 export async function createPublicAsset(
   db: DB,
-  asset: CreateAssetProps,
+  assetId: UUID,
+  asset: CreateAssetDto,
 ): Promise<RequestOption> {
-  const sha = sha256Hex(asset.bytes);
+  const sha = sha256Hex(asset.content);
   const result = await db.run(
     `INSERT INTO asset (
        asset_id, description, asset_type,
@@ -93,15 +95,15 @@ export async function createPublicAsset(
        content, created_at, created_by
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)`,
     [
-      asset.assetId,
+      assetId,
       asset.description,
-      asset.assetType,
-      asset.fileName,
-      asset.mimeType,
-      asset.bytes.length,
+      asset.asset_type,
+      asset.file_name,
+      asset.mime_type,
+      asset.content.length,
       sha,
-      asset.bytes,
-      asset.createdBy,
+      asset.content,
+      asset.created_by,
     ],
   );
 
@@ -115,23 +117,25 @@ export async function createPublicAsset(
 /**
  * Adds a confidential asset to the database.
  * @param db
+ * @param assetId
  * @param asset
  */
 export async function createConfidentialAsset(
   db: DB,
-  asset: CreateConfidentialAssetProps,
+  assetId: UUID,
+  asset: CreateAssetDto,
 ): Promise<RequestOption> {
-  const keyId = asset.keyId ?? "v1";
-  const dataKey = hkdf32(MASTER_KEY, keyId, asset.assetId);
+  const keyId = asset.key_id ?? "v1";
+  const dataKey = hkdf32(MASTER_KEY, keyId, asset.key_id);
 
   const nonce = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-  const aad = Buffer.from(`${asset.assetId}|confidential|${asset.mimeType}`, "utf8");
+  const aad = Buffer.from(`${asset.key_id}|confidential|${asset.mime_type}`, "utf8");
   cipher.setAAD(aad);
-  const ciphertext = Buffer.concat([cipher.update(asset.bytes), cipher.final()]);
+  const ciphertext = Buffer.concat([cipher.update(asset.content), cipher.final()]);
   const tag = cipher.getAuthTag();
 
-  const sha = sha256Hex(asset.bytes);
+  const sha = sha256Hex(asset.content);
 
   const response = await db.run(
     `INSERT INTO asset (
@@ -141,17 +145,17 @@ export async function createConfidentialAsset(
        created_at, created_by
      ) VALUES (?, ?, 'confidential', ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)`,
     [
-      asset.assetId,
+      assetId,
       asset.description ?? null,
-      asset.fileName ?? null,
-      asset.mimeType,
-      asset.bytes.length,
+      asset.file_name ?? null,
+      asset.mime_type,
+      asset.content.length,
       sha,
       ciphertext,
       nonce,
       tag,
       keyId,
-      asset.createdBy,
+      asset.created_by,
     ],
   );
 

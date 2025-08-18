@@ -1,4 +1,5 @@
 import { z } from "zod";
+import {Resource, UUID} from "../types";
 
 const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -31,10 +32,7 @@ export const assetSchema = z.object({
 
         description: z.string().nullable().optional(),
 
-        asset_type: z
-            .string()
-            .min(1)
-            .max(50),
+        asset_type: z.enum(["image", "document", "confidential"]),
 
         file_name: z.string().max(255).nullable().optional(),
         mime_type: z.string().max(100),
@@ -84,6 +82,17 @@ export const assetSchema = z.object({
     );
 
 
+export const createAssetSchema = z.object({
+    file_name: z.string().max(50),
+    mime_type: z.string().max(100),
+    content: z.instanceof(Buffer),
+    created_by: z.string().regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
+    description: z.string().max(255),
+    asset_type: z.enum(["image", "document", "confidential"]),
+    key_id: z.string().max(100).optional().default("v1"),
+})
+
 export type DeleteConfidentialDto = z.infer<typeof DeleteConfidentialSchema>;
 export type Asset = z.infer<typeof assetSchema>;
+export type CreateAssetDto = z.infer<typeof createAssetSchema>;
 export type UpdateConfidentialAsset = z.infer<typeof confPatchSchema>;

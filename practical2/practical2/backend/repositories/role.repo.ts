@@ -1,81 +1,22 @@
-// // roles.repo.ts
-// import type { DB } from "./db";
-// import type { RolesRow, Role, CreateRoleDTO, UUID } from "./types";
-// import { roleFromRow, serializePermissions } from "./types";
-//
-// export async function getRoleById(db: DB, roleId: UUID): Promise<Role | null> {
-//   const row = await db.get<RolesRow>(`SELECT * FROM roles WHERE role_id = ?`, [
-//     roleId,
-//   ]);
-//   return row ? roleFromRow(row) : null;
-// }
-//
-// export async function getRoleByName(
-//   db: DB,
-//   name: string,
-// ): Promise<Role | null> {
-//   const row = await db.get<RolesRow>(
-//     `SELECT * FROM roles WHERE role_name = ?`,
-//     [name],
-//   );
-//   return row ? roleFromRow(row) : null;
-// }
-//
-// export async function listRoles(db: DB): Promise<Role[]> {
-//   const rows = await db.all<RolesRow>(
-//     `SELECT * FROM roles ORDER BY role_name ASC`,
-//   );
-//   return rows.map(roleFromRow);
-// }
-//
-// export async function createRole(db: DB, dto: CreateRoleDTO): Promise<void> {
-//   await db.run(
-//     `INSERT INTO roles (role_id, role_name, role_description, permissions)
-//      VALUES (?, ?, ?, ?)`,
-//     [
-//       dto.roleId,
-//       dto.name,
-//       dto.description ?? null,
-//       serializePermissions(dto.permissions),
-//     ],
-//   );
-// }
-//
-// export async function updateRole(
-//   db: DB,
-//   roleId: UUID,
-//   patch: {
-//     name?: string;
-//     description?: string | null;
-//     permissions?: CreateRoleDTO["permissions"];
-//   },
-// ): Promise<void> {
-//   const sets: string[] = [];
-//   const vals: any[] = [];
-//   const push = (c: string, v: any) => {
-//     sets.push(`${c} = ?`);
-//     vals.push(v);
-//   };
-//
-//   if (patch.name !== undefined) push("role_name", patch.name);
-//   if (patch.description !== undefined)
-//     push("role_description", patch.description);
-//   if (patch.permissions !== undefined)
-//     push("permissions", serializePermissions(patch.permissions));
-//
-//   if (sets.length === 0) return;
-//   vals.push(roleId);
-//
-//   await db.run(`UPDATE roles SET ${sets.join(", ")} WHERE role_id = ?`, vals);
-// }
-//
-// export async function deleteRole(db: DB, roleId: UUID): Promise<void> {
-//   await db.run(`DELETE FROM roles WHERE role_id = ?`, [roleId]);
-// }
-
 import type {APPLICATION_DB as DB} from "../db/db";
-import {RoleOption} from "../types/role.types";
-import {Role} from "../schemas/roles.schema";
+import {ListRoleOption, RoleOption} from "../types/role.types";
+import {Role, roleSchema} from "../schemas/roles.schema";
+import { UUID } from "../types";
+
+export async function getRoleById(db: DB, roleId: UUID): Promise<RoleOption> {
+  const row : Role | undefined = await db.get<Role>(`SELECT * FROM roles WHERE role_id = ?`, [
+    roleId,
+  ]);
+
+  if(!row) {
+      console.error("[ROLE REPO]: Failed to find a role with id %s", roleId);
+      return {ok: false, error: "Failed to find a role with id "};
+  }
+
+ const parsed = roleSchema.parse(row);
+
+  return { ok: true, role: parsed } ;
+}
 
 export async function getRoleByName(db: DB, role_name: string): Promise<RoleOption> {
     const row: Role | undefined = await db.get<Role>(
@@ -88,5 +29,48 @@ export async function getRoleByName(db: DB, role_name: string): Promise<RoleOpti
         return { ok: false, error: "Failed to find role"}
     }
 
-    return { ok: true, role: row };
+    const parsed = roleSchema.parse(row);
+
+    return { ok: true, role: parsed };
+}
+
+export async function listRoles(db: DB): Promise<ListRoleOption> {
+  const rows: Role[] | undefined = await db.all<Role>(
+    `SELECT * FROM roles ORDER BY role_name ASC`,
+  );
+
+  if(!rows || rows.length < 1) {
+    console.error("[ROLE REPO]: Failed to list roles.")
+    return { ok: false, error: "Failed to list roles." };
+  }
+
+  return {
+      ok: true,
+      roles: rows,
+  };
+}
+
+export async function roleHasPermission(db: DB, roleId: string, permission: string): Promise<boolean> {
+
+    const row: Role | undefined = await db.get<Role>("SELECT * FROM roles WHERE role_id = ?", [roleId]);
+
+    if (!row) {
+        return false;
+    }
+
+    try {
+        const parsed = roleSchema.parse(row);
+
+        const permissions = parsed.permissions as Record<string, string[]>;
+
+        return Object.values(permissions).some((permArray) =>
+            permArray.includes(permission)
+        );
+    } catch(err) {
+        if (typeof err === "object") {
+            const error = err as Error;
+            console.error(`[ROLE REPO]: ${error.message}`)
+        }
+        return false;
+    }
 }

@@ -1,53 +1,55 @@
 import type { APPLICATION_DB as DB } from "../db/db";
-import type { Resource, UUID } from "../types";
+import type { UUID } from "../types";
 import {randomUUID} from "crypto";
 import {
     createConfidentialAsset,
     createPublicAsset,
     getAssetBytes,
-    listAssets as repoListAsset, softDeleteAsset,
+    softDeleteAsset,
     updateAssetMeta,
     updateConfidentialAsset as updateConfidentialAssetRepo
 } from "../repositories/asset.repo";
 
 import {
-    AssetListOptions,
-    CreateAssetRequest, DeleteAssetProps,
-    PatchAssetRequest, PatchConfAssetRequest,
+    PatchAssetRequest,
     RequestAssetOption,
     RequestOption
 } from "../types/asset.types";
-import {Asset, User} from "../db/types";
-import {DeleteConfidentialDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
-import {getUserById} from "../repositories/user.repo";
-import {getRoleByName} from "../repositories/role.repo";
+import { User } from "../db/types";
+import {CreateAssetDto, DeleteConfidentialDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
+import { getUserById } from "../repositories/user.repo";
+import { roleHasPermission } from "../repositories/role.repo";
 
 export async function createAsset(
     db: DB,
-    asset: CreateAssetRequest
+    asset: CreateAssetDto
 ) : Promise<RequestOption> {
+    const user: User | null = await getUserById(db, asset.created_by as UUID)
+
+    if (!user) {
+        return { ok: false, error: "Failed to find user that requested delete operation." };
+    }
+
     const assetId: UUID = randomUUID() as UUID;
 
-    if (asset.assetType === "confidential") {
+    if (asset.asset_type === "confidential") {
+        const hasPermissions = await roleHasPermission(db, user.roleId, "create_conf")
 
-        return await createConfidentialAsset(db, {
-            assetId,
-            fileName: asset.fileName,
-            mimeType: asset.mimeType,
-            bytes: asset.bytes,
-            createdBy:asset.createdBy,
-            description: asset.description,
-        });
+        if (!hasPermissions) {
+            return { ok: false, error: "Failed to create asset, the user does not have permission." };
+        }
+
+        return await createConfidentialAsset(db, assetId, asset);
     } else {
-        return await createPublicAsset(db, {
-            assetId,
-            fileName: asset.fileName,
-            mimeType: asset.mimeType,
-            bytes: asset.bytes,
-            createdBy: asset.createdBy,
-            description: asset.description,
-            assetType: asset.assetType,
-        });
+        const permission = asset.asset_type === "image" ? "create_image" : "create_doc";
+
+        const hasPermissions = await roleHasPermission(db, user.roleId, permission)
+
+        if (!hasPermissions) {
+            return { ok: false, error: "Failed to create asset, the user does not have permission." };
+        }
+
+        return await createPublicAsset(db, assetId, asset);
     }
 }
 
@@ -55,17 +57,24 @@ export async function getAsset(db: DB, assetId: UUID) : Promise<RequestAssetOpti
     return getAssetBytes(db, assetId);
 }
 
-export async function listAssets(
-    db: DB,
-    opts: AssetListOptions = {},
-): Promise<Asset[]> {
-    return await repoListAsset(db, opts);
-}
-
 export async function updateAsset(
     db: DB,
     patch: PatchAssetRequest,
 ): Promise<RequestOption> {
+    const user: User | null = await getUserById(db, patch.updatedBy as UUID)
+
+    if (!user) {
+        return { ok: false, error: "Failed to find user that requested delete operation." };
+    }
+
+    const permission = patch.assetType === "image" ? "update_image" : "update_doc";
+
+    const hasPermissions = await roleHasPermission(db, user.roleId, permission)
+
+    if (!hasPermissions) {
+        return { ok: false, error: "Failed to update asset, the user does not have permission." };
+    }
+
     return updateAssetMeta(db, patch);
 }
 
@@ -76,46 +85,34 @@ export async function updateConfidentialAsset(
     const user: User | null = await getUserById(db, asset.updated_by as UUID)
 
     if (!user) {
-        console.error("[DELETE ASSET]: Failed to find the user that requested the delete operation.")
         return { ok: false, error: "Failed to find user that requested delete operation." };
     }
 
-    const admin_response = await getRoleByName(db, "Admin")
-    const manager_response = await getRoleByName(db, "Manager")
+    const hasPermissions = await roleHasPermission(db, user.roleId, "update_conf")
 
-    if (!admin_response.ok || !admin_response.role || !manager_response || !manager_response.role) {
-        console.error("[DELETE ASSET: Failed to find role with the name Admin/Manager");
-        return { ok: false, error: "Failed to find admin/manager role." };
-    }
-
-    if(user.roleId !== admin_response.role.role_id || user.roleId !== manager_response.role.role_id)
-    {
-        console.error("[DELETE ASSET]: User does not have permission to perform this operation.")
-        return { ok: false, error: "User does not have permission to perform this operation." };
+    if (!hasPermissions) {
+        return { ok: false, error: "Failed to update asset, the user does not have permission." };
     }
 
     return updateConfidentialAssetRepo(db, asset);
 }
 
+/**
+ * Checks if the user roles are correct then deletes the asset.
+ * @param db
+ * @param props
+ */
 export async function deleteAsset(db: DB, props: DeleteConfidentialDto) : Promise<RequestOption> {
     const user: User | null = await getUserById(db, props.deleted_by as UUID)
 
     if (!user) {
-        console.error("[DELETE ASSET]: Failed to find the user that requested the delete operation.")
         return { ok: false, error: "Failed to find user that requested delete operation." };
     }
 
-    const response = await getRoleByName(db, "Admin")
+    const hasPermissions = await roleHasPermission(db, user.roleId, "delete_conf")
 
-    if (!response.ok || !response.role) {
-        console.error("[DELETE ASSET: Failed to find role with the name Admin");
-        return { ok: false, error: "Failed to find admin role." };
-    }
-
-    if(user.roleId !== response.role.role_id)
-    {
-        console.error("[DELETE ASSET]: User does not have permission to perform this operation.")
-        return { ok: false, error: "User does not have permission to perform this operation." };
+    if (!hasPermissions) {
+        return { ok: false, error: "Failed to delete asset, the user does not have permission." };
     }
 
     return softDeleteAsset(db, props);

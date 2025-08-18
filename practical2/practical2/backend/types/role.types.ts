@@ -5,3 +5,9 @@ export type RoleOption = {
     error?: string;
     role?: Role;
 }
+
+export type ListRoleOption = {
+    ok: boolean;
+    error?: string;
+    roles?: Role[];
+}

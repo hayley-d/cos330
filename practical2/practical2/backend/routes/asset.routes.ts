@@ -372,6 +372,9 @@ export function confidentialRoutes(db: DB) {
             });
     });
 
+    /*
+    Create a new confidential document type.
+     */
     router.post(
         "/",
         async (req: Request<{}, {}, ValidateOtpDto>, res) => {

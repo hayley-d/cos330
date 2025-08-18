@@ -20,14 +20,17 @@ export const roleSchema = z.object({
 
     permissions: z
         .string()
-        .refine((val) => {
+        .transform((val, ctx) => {
             try {
-                JSON.parse(val);
-                return true;
+                return JSON.parse(val);
             } catch {
-                return false;
+                ctx.addIssue({
+                    code: "custom",
+                    message: "permissions must be valid JSON",
+                });
+                return z.NEVER;
             }
-        }, "permissions must be valid JSON"),
+        }),
 });
 
 export type Role = z.infer<typeof roleSchema>;
