@@ -11,16 +11,42 @@ import {
 } from "../repositories/asset.repo";
 
 import {
+    GetAssetOption,
     PatchAssetRequest,
     RequestAssetOption,
     RequestOption
 } from "../types/asset.types";
 import { User } from "../db/types";
-import {CreateAssetDto, DeleteAssetDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
+import {CreateAssetDto, DeleteAssetDto, ReadAssetDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
 import { getUserById } from "../repositories/user.repo";
 import { roleHasPermission } from "../repositories/role.repo";
 
+export async function getAssetByID(db: DB, props: ReadAssetDto): Promise<RequestAssetOption> {
+    const user: User | null = await getUserById(db, props.user_id as UUID)
+    const asset: GetAssetOption = await getAssetBytes(db, props.asset_id as UUID);
 
+    if (!user) {
+        return { ok: false, error: "Failed to find user that requested delete operation." };
+    }
+
+    if (asset.asset_type === "confidential") {
+        const hasPermissions = await roleHasPermission(db, user.roleId, "create_conf")
+
+        if (!hasPermissions) {
+            return { ok: false, error: "Failed to create asset, the user does not have permission." };
+        }
+    } else {
+        const permission = asset.asset_type === "image" ? "create_image" : "create_doc";
+
+        const hasPermissions = await roleHasPermission(db, user.roleId, permission)
+
+        if (!hasPermissions) {
+            return { ok: false, error: "Failed to fetch asset, the user does not have permission." };
+        }
+    }
+
+    return asset;
+}
 
 export async function createAsset(
     db: DB,

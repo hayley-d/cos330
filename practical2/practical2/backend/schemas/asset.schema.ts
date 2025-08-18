@@ -12,6 +12,23 @@ function sanitizeString(input: string): string {
         .replace(/\//g, "&#x2F;");
 }
 
+export const ReadAssetSchema = z.object({
+    asset_id: z
+        .string()
+        .regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
+    user_id: z
+        .string()
+        .regex(uuidV4Regex, "user_id must be a valid UUID v4"),
+});
+
+export const ListAssetItemSchema = z.object({
+    asset_id: z
+        .string()
+        .regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
+    file_name: z.string().max(255).optional(),
+    description: z.string().optional()
+});
+
 export const DeleteAssetSchema = z.object({
     asset_id: z
         .string()
@@ -105,4 +122,5 @@ export type DeleteAssetDto = z.infer<typeof DeleteAssetSchema>;
 export type Asset = z.infer<typeof assetSchema>;
 export type CreateAssetDto = z.infer<typeof createAssetSchema>;
 export type UpdateConfidentialAsset = z.infer<typeof confPatchSchema>;
-
+export type ReadAssetDto = z.infer<typeof ReadAssetSchema>;
+export type ListAssetItem = z.infer<typeof ListAssetItemSchema>;

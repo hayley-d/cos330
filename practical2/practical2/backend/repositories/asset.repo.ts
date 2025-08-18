@@ -3,7 +3,7 @@ import crypto from "crypto";
 import {UUID} from "../types";
 import {
     AssetListOptions,
-    GetAssetOption,
+    GetAssetOption, ListAssetsOption,
     PatchAssetRequest,
     RequestAssetOption,
     RequestOption
@@ -11,10 +11,10 @@ import {
 import {
     Asset,
     assetSchema,
-    CreateAssetDto,
-    DeleteConfidentialDto,
+    CreateAssetDto, DeleteAssetDto, ListAssetItem, ListAssetItemSchema,
     UpdateConfidentialAsset
 } from "../schemas/asset.schema";
+import {roleSchema} from "../schemas/roles.schema";
 
 const MASTER_KEY_HEX = process.env.MASTER_KEY;
 if (!MASTER_KEY_HEX) {
@@ -112,6 +112,25 @@ export async function createPublicAsset(
   }
 
   return { ok: true };
+}
+
+
+export async function getAssetList(
+    db: DB,
+    assetType: "image" | "confidential" | "document",
+): Promise<ListAssetsOption> {
+    const rows = await db.get<Asset>(
+        `SELECT asset_id, file_name, description FROM asset WHERE asset_type = ? AND deleted_at IS NULL`,
+        [assetType],
+    );
+
+    if (!rows) {
+        return { ok: false, error: `Unable to find assets of type ${assetType} in the database`}
+    }
+
+    const parsedRows : ListAssetItem[] = rows.map(row  => (ListAssetItemSchema.parse(row)))
+
+    return { ok: true, items: parsedRows };
 }
 
 /**
@@ -221,7 +240,7 @@ export async function getAssetBytes(
     decipher.final(),
   ]);
 
-  return { ok: true, mimeType: row.mime_type, bytes };
+  return { ok: true, mimeType: row.mime_type, asset_type: row.asset_type, bytes };
 }
 
 /**
@@ -229,7 +248,7 @@ export async function getAssetBytes(
  * @param db
  * @param props
  */
-export async function softDeleteAsset(db: DB, props: DeleteConfidentialDto): Promise<RequestOption> {
+export async function softDeleteAsset(db: DB, props: DeleteAssetDto): Promise<RequestOption> {
   const result = await db.run(`UPDATE asset SET deleted_by = ?, deleted_at = unixepoch() WHERE asset_id = ? AND deleted_at IS NULL`, [
     props.deleted_by,
     props.asset_id,
