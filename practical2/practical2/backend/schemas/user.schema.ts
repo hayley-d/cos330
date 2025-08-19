@@ -32,7 +32,32 @@ export const UpdateUserRoleSchema = z.object({
   role_id: z.string().nonempty(),
 });
 
+const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const UserSchema = z.object({
+  user_id: z
+      .string()
+      .regex(uuidV4Regex, "role_id must be a valid UUID v4"),
+  first_name: z.string().min(1).max(50),
+  last_name: z.string().min(1).max(50),
+  email: z.string().email(),
+  password_hash: z.string(),
+  created_at: z.number().default(0),
+  last_login: z.number().default(0),
+  is_approved: z.boolean().default(false),
+  sign_in_count: z.number().default(0),
+  failed_login_attempts: z.number().default(0),
+  current_sign_in_ip: z.string().optional(),
+  last_sign_in_ip: z.string().optional(),
+  role_id: z
+      .string()
+      .regex(uuidV4Regex, "role_id must be a valid UUID v4"),
+  mfa_totp_secret: z.string(),
+  mfa_enrolled_at: z.number().default(0),
+})
+
 export type CreateUserDTO = z.infer<typeof CreateUserDTOSchema>;
 export type validateMfaDto = z.infer<typeof ValidateMfaSchema>;
 export type UserLoginDto = z.infer<typeof UserLoginSchema>;
 export type ApproveUserDto = z.infer<typeof ApproveUserSchema>;
+export type User = z.infer<typeof UserSchema>;

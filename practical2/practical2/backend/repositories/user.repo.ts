@@ -11,7 +11,6 @@ import {
   validatePassword,
   verifyPassword,
 } from "../services/user.service";
-import type { User, UsersRow } from "../db/types";
 import type {
   ApproveUserDto,
   CreateUserDTO,
@@ -27,23 +26,43 @@ import type {
 } from "../types/user.types";
 
 import { getRoleById } from "../services/role.service";
+import {ListAssetsOption} from "../types/asset.types";
+import {Asset, ListAssetItem, ListAssetItemSchema} from "../schemas/asset.schema";
+import {User, UserSchema} from "../schemas/user.schema";
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
-  const row = await db.get<UsersRow>("SELECT * FROM users WHERE user_id = ?", [
+  const row = await db.get<User>("SELECT * FROM users WHERE user_id = ?", [
     userId,
   ]);
 
-  return row ? userFromRow(row) : null;
+  return row ? row : null;
+}
+
+
+export async function getUserList(
+    db: DB,
+): Promise<{ ok: boolean, items:User[]}> {
+  const rows = await db.all<User>(`SELECT * FROM users`, [],);
+
+  if (!rows) {
+    return { ok: false, items: [] };
+  }
+
+  const parsedRows : User[] = rows.map(
+      (row) => UserSchema.parse(row)
+  )
+
+  return { ok: true, items: parsedRows };
 }
 
 export async function getUserByEmail(
   db: DB,
   email: Email,
 ): Promise<User | null> {
-  const row = await db.get<UsersRow>(`SELECT * FROM users WHERE email = ?`, [
+  const row = await db.get<User>(`SELECT * FROM users WHERE email = ?`, [
     email.toLowerCase(),
   ]);
-  return row ? userFromRow(row) : null;
+  return row ? row : null;
 }
 
 export async function createUser(
@@ -175,12 +194,12 @@ export async function login(
     return { ok: false, error: "User not found." };
   }
 
-  const isSetup = await isMfaSetup(db, user.userId);
+  const isSetup = await isMfaSetup(db, user.user_id as UUID);
   if (!isSetup) {
     return { ok: false, error: "MFA not setup" };
   }
 
-  const isValidPassword = await verifyPassword(dto.password, user.passwordHash);
+  const isValidPassword = await verifyPassword(dto.password, user.password_hash);
 
   if (!isValidPassword) {
     return { ok: false, error: "Password does not match." };
@@ -200,16 +219,16 @@ export async function validateUserOtp(
 
   const otp = dto.otp.trim();
 
-  if (user && user.mfaTotpSecret) {
-    const ok = authenticator.verify({ token: otp, secret: user.mfaTotpSecret });
+  if (user && user.mfa_totp_secret) {
+    const ok = authenticator.verify({ token: otp, secret: user.mfa_totp_secret });
     if (!ok) {
-      await bumpLoginFailure(db, { user_id: user.userId });
+      await bumpLoginFailure(db, { user_id: user.user_id as UUID });
       return { ok: false, error: "Invalid OTP." };
     }
   }
 
   await bumpLoginSuccess(db, {
-    user_id: user.userId,
+    user_id: user.user_id as UUID,
     current_ip: dto.current_ip,
   });
   return { ok: true, user };
@@ -226,7 +245,7 @@ export async function validateMfa(
 
   const ok = authenticator.verify({
     token: dto.token.trim(),
-    secret: user.mfaTotpSecret,
+    secret: user.mfa_totp_secret,
   });
   if (!ok) {
     return { ok: false, error: "Invalid OTP." };
@@ -234,7 +253,7 @@ export async function validateMfa(
 
   await db.run(
     `UPDATE users SET mfa_enrolled_at = unixepoch() WHERE user_id = ?`,
-    [user.userId],
+    [user.user_id],
   );
 
   return { ok: true };

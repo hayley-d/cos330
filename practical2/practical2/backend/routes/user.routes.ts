@@ -9,7 +9,7 @@ import {
     login,
     validateUserOtp,
     approveUser,
-    validateMfa, getUserByEmail,
+    validateMfa, getUserByEmail, getUserList,
 } from "../repositories/user.repo";
 import type {
   MfaResponse,
@@ -33,6 +33,16 @@ import {
 const router = Router();
 
 export default function userRoutes(db: DB) {
+
+    router.get("/list", async (req, res) => {
+        const list = await getUserList(db);
+
+        if (!list || !list.ok) {
+            return res.status(404).send("Not Found");
+        }
+
+        return res.status(200).json(list.items);
+    })
   router.post("/register", async (req: Request<{}, {}, CreateUserDTO>, res) => {
     try {
       const parsed = CreateUserDTOSchema.safeParse(req.body);
@@ -55,9 +65,9 @@ export default function userRoutes(db: DB) {
             }
             const token = jwt.sign(
                 {
-                    user_id: user.userId,
+                    user_id: user.user_id,
                     user_email: user.email,
-                    role_id: user.roleId,
+                    role_id: user.role_id,
                 },
                 process.env.JWT_SECRET!,
                 {expiresIn: "1h"},
@@ -111,9 +121,9 @@ export default function userRoutes(db: DB) {
       if (result.user && result.user.email) {
           const token = jwt.sign(
               {
-                  user_id: result.user.userId,
+                  user_id: result.user.user_id,
                   user_email: result.user.email,
-                  role_id: result.user.roleId,
+                  role_id: result.user.role_id,
               },
               process.env.JWT_SECRET!,
               {expiresIn: "1h"},
@@ -126,7 +136,7 @@ export default function userRoutes(db: DB) {
       .status(200)
       .json({
         mfa_required: true,
-        user_id: result.user?.userId,
+        user_id: result.user?.user_id,
         user_email: result.user?.email,
       });
   });
@@ -148,9 +158,9 @@ export default function userRoutes(db: DB) {
 
       const token = jwt.sign(
         {
-          user_id: result.user?.userId,
+          user_id: result.user?.user_id,
           user_email: result.user?.email,
-          role_id: result.user?.roleId,
+          role_id: result.user?.role_id,
         },
         process.env.JWT_SECRET!,
         { expiresIn: "1h" },
