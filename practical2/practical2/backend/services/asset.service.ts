@@ -12,11 +12,9 @@ import {
 
 import {
   GetAssetOption,
-  PatchAssetRequest,
   RequestAssetOption,
   RequestOption,
 } from "../types/asset.types";
-import { User } from "../db/types";
 import {
   CreateAssetDto,
   DeleteAssetDto,
@@ -26,6 +24,7 @@ import {
 } from "../schemas/asset.schema";
 import { getUserById } from "../repositories/user.repo";
 import { roleHasPermission } from "../repositories/role.repo";
+import {User} from "../schemas/user.schema";
 
 export async function getAssetByID(
   db: DB,
@@ -44,7 +43,7 @@ export async function getAssetByID(
   if (asset.asset_type === "confidential") {
     const hasPermissions = await roleHasPermission(
       db,
-      user.roleId,
+      user.role_id,
       "create_conf",
     );
 
@@ -58,7 +57,7 @@ export async function getAssetByID(
     const permission =
       asset.asset_type === "image" ? "create_image" : "create_doc";
 
-    const hasPermissions = await roleHasPermission(db, user.roleId, permission);
+    const hasPermissions = await roleHasPermission(db, user.role_id, permission);
 
     if (!hasPermissions) {
       return {
@@ -89,7 +88,7 @@ export async function createAsset(
   if (asset.asset_type === "confidential") {
     const hasPermissions = await roleHasPermission(
       db,
-      user.roleId,
+      user.role_id,
       "create_conf",
     );
 
@@ -105,7 +104,7 @@ export async function createAsset(
     const permission =
       asset.asset_type === "image" ? "create_image" : "create_doc";
 
-    const hasPermissions = await roleHasPermission(db, user.roleId, permission);
+    const hasPermissions = await roleHasPermission(db, user.role_id, permission);
 
     if (!hasPermissions) {
       return {
@@ -141,7 +140,7 @@ export async function updateAsset(
   const permission =
     patch.asset_type === "image" ? "update_image" : "update_doc";
 
-  const hasPermissions = await roleHasPermission(db, user.roleId, permission);
+  const hasPermissions = await roleHasPermission(db, user.role_id, permission);
 
   if (!hasPermissions) {
     return {
@@ -168,7 +167,7 @@ export async function updateConfidentialAsset(
 
   const hasPermissions = await roleHasPermission(
     db,
-    user.roleId,
+    user.role_id,
     "update_conf",
   );
 
@@ -214,7 +213,7 @@ export async function deleteAsset(
     permission = "delete_conf";
   }
 
-  const hasPermissions = await roleHasPermission(db, user.roleId, permission);
+  const hasPermissions = await roleHasPermission(db, user.role_id, permission);
 
   if (!hasPermissions) {
     return {

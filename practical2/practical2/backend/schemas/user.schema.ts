@@ -13,8 +13,8 @@ export const ValidateMfaSchema = z.object({
 });
 
 export const UserLoginSchema = z.object({
-  user_email: z.string().email(),
-  password: z.string().min(8),
+  user_email: z.string().email({message: "Invalid email address"}),
+  password: z.string().min(4),
 });
 
 export const ValidateOtpSchema = z.object({
@@ -42,15 +42,26 @@ export const UserSchema = z.object({
   email: z.string().email(),
   password_hash: z.string(),
   created_at: z.number().default(0),
-  last_login: z.number().default(0),
-  is_approved: z.boolean().default(false),
+  last_login: z.number().default(0).nullable(),
+ is_approved: z.number()
+      .default(0)
+      .transform((val) => val === 1),
   sign_in_count: z.number().default(0),
   failed_login_attempts: z.number().default(0),
-  current_sign_in_ip: z.string().optional(),
-  last_sign_in_ip: z.string().optional(),
+  current_sign_in_ip: z.string().optional().nullable(),
+  last_sign_in_ip: z.string().optional().nullable(),
   role_id: z.string().regex(uuidV4Regex, "role_id must be a valid UUID v4"),
-  mfa_totp_secret: z.string(),
-  mfa_enrolled_at: z.number().default(0),
+  mfa_totp_secret: z.string().nullable(),
+  mfa_enrolled_at: z.number().default(0).nullable(),
+});
+
+
+export const ListUserSchema = z.object({
+  user_id: z.string().regex(uuidV4Regex, "role_id must be a valid UUID v4"),
+  first_name: z.string().min(1).max(50),
+  last_name: z.string().min(1).max(50),
+  email: z.string().email({ message: "Invalid email address" }),
+  role_id: z.string().regex(uuidV4Regex, "role_id must be a valid UUID v4"),
 });
 
 export type CreateUserDTO = z.infer<typeof CreateUserDTOSchema>;
@@ -58,3 +69,4 @@ export type validateMfaDto = z.infer<typeof ValidateMfaSchema>;
 export type UserLoginDto = z.infer<typeof UserLoginSchema>;
 export type ApproveUserDto = z.infer<typeof ApproveUserSchema>;
 export type User = z.infer<typeof UserSchema>;
+export type ListUser = z.infer<typeof ListUserSchema>;

@@ -17,19 +17,18 @@ import type {
   MfaResponse,
   CreateUserDTO,
   ValidateMfaDto,
-  UserLoginDto,
   RequestUserOption,
   ValidateOtpDto,
   ApproveUserDto,
   UpdateUserRoleDto,
 } from "../types/user.types";
 import {
-  ApproveUserSchema,
-  CreateUserDTOSchema,
-  UpdateUserRoleSchema,
-  UserLoginSchema,
-  ValidateMfaSchema,
-  ValidateOtpSchema,
+    ApproveUserSchema,
+    CreateUserDTOSchema,
+    UpdateUserRoleSchema, UserLoginDto,
+    UserLoginSchema,
+    ValidateMfaSchema,
+    ValidateOtpSchema,
 } from "../schemas/user.schema";
 
 const router = Router();
@@ -44,6 +43,7 @@ export default function userRoutes(db: DB) {
 
     return res.status(200).json(list.items);
   });
+
   router.post("/register", async (req: Request<{}, {}, CreateUserDTO>, res) => {
     try {
       const parsed = CreateUserDTOSchema.safeParse(req.body);
@@ -120,15 +120,18 @@ export default function userRoutes(db: DB) {
   );
 
   router.post("/login", async (req: Request<{}, {}, UserLoginDto>, res) => {
+      console.log("[REQ BODY]: ",req.body)
     const parsed = UserLoginSchema.safeParse(req.body);
 
     if (!parsed.success) {
+      console.error("[LOGIN]: Failed to parse payload")
       return res.status(400).json({ error: parsed.error.flatten });
     }
 
-    const result: RequestUserOption = await login(db, req.body);
+    const result: RequestUserOption = await login(db, parsed.data);
 
     if (!result.ok) {
+      console.error("[LOGIN]: Failed to login user.")
       return res.status(400).json(result);
     }
 

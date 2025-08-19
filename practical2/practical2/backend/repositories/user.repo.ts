@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 import { authenticator } from "otplib";
 import type { APPLICATION_DB as DB } from "../db/db";
 import type { UUID, Email } from "../types";
-import { userFromRow } from "../types";
 import {
   generateTotpSecret,
   getGuestRoleId,
@@ -20,19 +19,12 @@ import type {
   UpdateFailedUserSignInDto,
   UpdateUserRoleDto,
   UpdateUserSignInDto,
-  UserLoginDto,
   ValidateMfaDto,
   ValidateOtpDto,
 } from "../types/user.types";
 
 import { getRoleById } from "../services/role.service";
-import { ListAssetsOption } from "../types/asset.types";
-import {
-  Asset,
-  ListAssetItem,
-  ListAssetItemSchema,
-} from "../schemas/asset.schema";
-import { User, UserSchema } from "../schemas/user.schema";
+import {ListUser, ListUserSchema, User, UserLoginDto, UserSchema} from "../schemas/user.schema";
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
   const row = await db.get<User>("SELECT * FROM users WHERE user_id = ?", [
@@ -44,14 +36,14 @@ export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
 
 export async function getUserList(
   db: DB,
-): Promise<{ ok: boolean; items: User[] }> {
-  const rows = await db.all<User>(`SELECT * FROM users`, []);
+): Promise<{ ok: boolean; items: ListUser[] }> {
+  const rows = await db.all<User>(`SELECT first_name, last_name, role_id, user_id, email FROM users WHERE first_name <> 'anonymous'`, []);
 
   if (!rows) {
     return { ok: false, items: [] };
   }
 
-  const parsedRows: User[] = rows.map((row) => UserSchema.parse(row));
+  const parsedRows: ListUser[] = rows.map((row) => ListUserSchema.parse(row));
 
   return { ok: true, items: parsedRows };
 }
@@ -190,15 +182,17 @@ export async function login(
   db: DB,
   dto: UserLoginDto,
 ): Promise<RequestUserOption> {
-  const user: User | null = await getUserByEmail(db, dto.user_email);
+  const user: User | null = await getUserByEmail(db, dto.user_email as Email);
   if (!user) {
+    console.error("[LOGIN]: Failed to find user in db.");
     return { ok: false, error: "User not found." };
   }
 
-  const isSetup = await isMfaSetup(db, user.user_id as UUID);
-  if (!isSetup) {
-    return { ok: false, error: "MFA not setup" };
-  }
+  // const isSetup = await isMfaSetup(db, user.user_id as UUID);
+  // if (!isSetup) {
+  //   console.error("[LOGIN]: User has not been setup");
+  //   return { ok: false, error: "MFA not setup" };
+  // }
 
   const isValidPassword = await verifyPassword(
     dto.password,
@@ -246,7 +240,7 @@ export async function validateMfa(
   dto: ValidateMfaDto,
 ): Promise<RequestOption> {
   const user: User | null = await getUserByEmail(db, dto.user_email);
-  if (!user) {
+  if (!user || !user.mfa_totp_secret) {
     return { ok: false, error: "User not found." };
   }
 

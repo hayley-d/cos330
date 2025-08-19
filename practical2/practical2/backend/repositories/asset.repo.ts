@@ -1,5 +1,8 @@
 import type { APPLICATION_DB as DB } from "../db/db";
 import crypto from "crypto";
+import path from "path";
+import dotenv from "dotenv";
+
 import { UUID } from "../types";
 import {
   AssetListOptions,
@@ -19,6 +22,7 @@ import {
   UpdateConfidentialAsset,
 } from "../schemas/asset.schema";
 
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const MASTER_KEY_HEX = process.env.MASTER_KEY;
 if (!MASTER_KEY_HEX) {
   throw new Error("MASTER_KEY not set in .env");
@@ -56,7 +60,7 @@ export async function getAsset(
   assetId: UUID,
 ): Promise<RequestAssetOption> {
   const row: Asset | undefined = await db.get<Asset>(
-    `SELECT * FROM asset WHERE asset_id = ?`,
+    `SELECT * FROM asset WHERE asset_id = ? AND deleted_at IS NULL`,
     [assetId],
   );
   if (!row) {
