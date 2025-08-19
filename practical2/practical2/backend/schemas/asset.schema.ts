@@ -50,6 +50,20 @@ export const confPatchSchema = z.object({
     description: z.string().transform(sanitizeString).optional()
 });
 
+export const AssetPatchSchema = z.object({
+    asset_id: z
+        .string()
+        .regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
+    updated_by: z
+        .string()
+        .regex(uuidV4Regex, "updated_by must be a valid UUID v4"),
+    content: z.instanceof(Buffer).optional(),
+    file_name: z.string().max(255).transform(sanitizeString).optional(),
+    description: z.string().transform(sanitizeString).optional(),
+    mime_type: z.string().max(100),
+    asset_type: z.enum(["image", "document"])
+
+});
 
 export const assetSchema = z.object({
         asset_id: z
@@ -124,3 +138,4 @@ export type CreateAssetDto = z.infer<typeof createAssetSchema>;
 export type UpdateConfidentialAsset = z.infer<typeof confPatchSchema>;
 export type ReadAssetDto = z.infer<typeof ReadAssetSchema>;
 export type ListAssetItem = z.infer<typeof ListAssetItemSchema>;
+export type PatchAssetDto = z.infer<typeof AssetPatchSchema>;

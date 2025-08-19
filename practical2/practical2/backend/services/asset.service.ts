@@ -17,7 +17,13 @@ import {
     RequestOption
 } from "../types/asset.types";
 import { User } from "../db/types";
-import {CreateAssetDto, DeleteAssetDto, ReadAssetDto, UpdateConfidentialAsset} from "../schemas/asset.schema";
+import {
+    CreateAssetDto,
+    DeleteAssetDto,
+    PatchAssetDto,
+    ReadAssetDto,
+    UpdateConfidentialAsset
+} from "../schemas/asset.schema";
 import { getUserById } from "../repositories/user.repo";
 import { roleHasPermission } from "../repositories/role.repo";
 
@@ -87,15 +93,15 @@ export async function getAsset(db: DB, assetId: UUID) : Promise<RequestAssetOpti
 
 export async function updateAsset(
     db: DB,
-    patch: PatchAssetRequest,
+    patch: PatchAssetDto,
 ): Promise<RequestOption> {
-    const user: User | null = await getUserById(db, patch.updatedBy as UUID)
+    const user: User | null = await getUserById(db, patch.updated_by as UUID)
 
     if (!user) {
         return { ok: false, error: "Failed to find user that requested delete operation." };
     }
 
-    const permission = patch.assetType === "image" ? "update_image" : "update_doc";
+    const permission = patch.asset_type === "image" ? "update_image" : "update_doc";
 
     const hasPermissions = await roleHasPermission(db, user.roleId, permission)
 

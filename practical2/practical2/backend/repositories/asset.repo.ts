@@ -4,17 +4,15 @@ import {UUID} from "../types";
 import {
     AssetListOptions,
     GetAssetOption, ListAssetsOption,
-    PatchAssetRequest,
     RequestAssetOption,
     RequestOption
 } from "../types/asset.types";
 import {
     Asset,
     assetSchema,
-    CreateAssetDto, DeleteAssetDto, ListAssetItem, ListAssetItemSchema,
+    CreateAssetDto, DeleteAssetDto, ListAssetItem, ListAssetItemSchema, PatchAssetDto,
     UpdateConfidentialAsset
 } from "../schemas/asset.schema";
-import {roleSchema} from "../schemas/roles.schema";
 
 const MASTER_KEY_HEX = process.env.MASTER_KEY;
 if (!MASTER_KEY_HEX) {
@@ -119,7 +117,7 @@ export async function getAssetList(
     db: DB,
     assetType: "image" | "confidential" | "document",
 ): Promise<ListAssetsOption> {
-    const rows = await db.get<Asset>(
+    const rows = await db.all<Asset>(
         `SELECT asset_id, file_name, description FROM asset WHERE asset_type = ? AND deleted_at IS NULL`,
         [assetType],
     );
@@ -128,7 +126,9 @@ export async function getAssetList(
         return { ok: false, error: `Unable to find assets of type ${assetType} in the database`}
     }
 
-    const parsedRows : ListAssetItem[] = rows.map(row  => (ListAssetItemSchema.parse(row)))
+    const parsedRows : ListAssetItem[] = rows.map(
+        (row) => ListAssetItemSchema.parse(row)
+    )
 
     return { ok: true, items: parsedRows };
 }
@@ -272,7 +272,7 @@ export async function softDeleteAsset(db: DB, props: DeleteAssetDto): Promise<Re
  */
 export async function updateAssetMeta(
   db: DB,
-  patch: PatchAssetRequest,
+  patch: PatchAssetDto,
 ): Promise<RequestOption> {
   const sets: string[] = [];
   const vals: any[] = [];
@@ -282,21 +282,21 @@ export async function updateAssetMeta(
   };
 
   if (patch.description !== undefined) push("description", patch.description);
-  if (patch.fileName !== undefined) push("file_name", patch.fileName);
+  if (patch.file_name !== undefined) push("file_name", patch.file_name);
   if (patch.content !== undefined) {
       const sha = sha256Hex(patch.content);
       push("content", patch.content);
       push("size_bytes",patch.content.length)
       push("sha256", sha)
   }
-  push("mime_type", patch.mimeType);
-  push("updated_by", patch.updatedBy);
+  push("mime_type", patch.mime_type);
+  push("updated_by", patch.updated_by);
 
   if (sets.length === 0) {
       return { ok: false, error: "Unable to update asset. No values provided to update." };
   }
 
-  vals.push(patch.assetId);
+  vals.push(patch.asset_id);
   const result = await db.run(
     `UPDATE asset SET ${sets.join(", ")}, updated_at = unixepoch() WHERE asset_id = ?`,
     vals,
