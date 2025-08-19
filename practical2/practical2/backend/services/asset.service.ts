@@ -24,7 +24,7 @@ import {
 } from "../schemas/asset.schema";
 import { getUserById } from "../repositories/user.repo";
 import { roleHasPermission } from "../repositories/role.repo";
-import {User} from "../schemas/user.schema";
+import { User } from "../schemas/user.schema";
 
 export async function getAssetByID(
   db: DB,
@@ -57,7 +57,11 @@ export async function getAssetByID(
     const permission =
       asset.asset_type === "image" ? "create_image" : "create_doc";
 
-    const hasPermissions = await roleHasPermission(db, user.role_id, permission);
+    const hasPermissions = await roleHasPermission(
+      db,
+      user.role_id,
+      permission,
+    );
 
     if (!hasPermissions) {
       return {
@@ -104,7 +108,11 @@ export async function createAsset(
     const permission =
       asset.asset_type === "image" ? "create_image" : "create_doc";
 
-    const hasPermissions = await roleHasPermission(db, user.role_id, permission);
+    const hasPermissions = await roleHasPermission(
+      db,
+      user.role_id,
+      permission,
+    );
 
     if (!hasPermissions) {
       return {

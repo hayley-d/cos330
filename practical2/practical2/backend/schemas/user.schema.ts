@@ -13,7 +13,7 @@ export const ValidateMfaSchema = z.object({
 });
 
 export const UserLoginSchema = z.object({
-  user_email: z.string().email({message: "Invalid email address"}),
+  user_email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(4),
 });
 
@@ -43,9 +43,10 @@ export const UserSchema = z.object({
   password_hash: z.string(),
   created_at: z.number().default(0),
   last_login: z.number().default(0).nullable(),
- is_approved: z.number()
-      .default(0)
-      .transform((val) => val === 1),
+  is_approved: z
+    .number()
+    .default(0)
+    .transform((val) => val === 1),
   sign_in_count: z.number().default(0),
   failed_login_attempts: z.number().default(0),
   current_sign_in_ip: z.string().optional().nullable(),
@@ -54,7 +55,6 @@ export const UserSchema = z.object({
   mfa_totp_secret: z.string().nullable(),
   mfa_enrolled_at: z.number().default(0).nullable(),
 });
-
 
 export const ListUserSchema = z.object({
   user_id: z.string().regex(uuidV4Regex, "role_id must be a valid UUID v4"),

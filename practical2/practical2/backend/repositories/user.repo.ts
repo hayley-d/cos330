@@ -24,7 +24,13 @@ import type {
 } from "../types/user.types";
 
 import { getRoleById } from "../services/role.service";
-import {ListUser, ListUserSchema, User, UserLoginDto, UserSchema} from "../schemas/user.schema";
+import {
+  ListUser,
+  ListUserSchema,
+  User,
+  UserLoginDto,
+  UserSchema,
+} from "../schemas/user.schema";
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
   const row = await db.get<User>("SELECT * FROM users WHERE user_id = ?", [
@@ -37,7 +43,10 @@ export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
 export async function getUserList(
   db: DB,
 ): Promise<{ ok: boolean; items: ListUser[] }> {
-  const rows = await db.all<User>(`SELECT first_name, last_name, role_id, user_id, email FROM users WHERE first_name <> 'anonymous'`, []);
+  const rows = await db.all<User>(
+    `SELECT first_name, last_name, role_id, user_id, email FROM users WHERE first_name <> 'anonymous'`,
+    [],
+  );
 
   if (!rows) {
     return { ok: false, items: [] };

@@ -23,12 +23,13 @@ import type {
   UpdateUserRoleDto,
 } from "../types/user.types";
 import {
-    ApproveUserSchema,
-    CreateUserDTOSchema,
-    UpdateUserRoleSchema, UserLoginDto,
-    UserLoginSchema,
-    ValidateMfaSchema,
-    ValidateOtpSchema,
+  ApproveUserSchema,
+  CreateUserDTOSchema,
+  UpdateUserRoleSchema,
+  UserLoginDto,
+  UserLoginSchema,
+  ValidateMfaSchema,
+  ValidateOtpSchema,
 } from "../schemas/user.schema";
 
 const router = Router();
@@ -74,14 +75,12 @@ export default function userRoutes(db: DB) {
           { expiresIn: "1h" },
         );
 
-        return res
-          .status(201)
-          .json({
-            user_email: result.user_email,
-            url: result.url,
-            user: user,
-            token,
-          });
+        return res.status(201).json({
+          user_email: result.user_email,
+          url: result.url,
+          user: user,
+          token,
+        });
       }
 
       return res
@@ -120,18 +119,18 @@ export default function userRoutes(db: DB) {
   );
 
   router.post("/login", async (req: Request<{}, {}, UserLoginDto>, res) => {
-      console.log("[REQ BODY]: ",req.body)
+    console.log("[REQ BODY]: ", req.body);
     const parsed = UserLoginSchema.safeParse(req.body);
 
     if (!parsed.success) {
-      console.error("[LOGIN]: Failed to parse payload")
+      console.error("[LOGIN]: Failed to parse payload");
       return res.status(400).json({ error: parsed.error.flatten });
     }
 
     const result: RequestUserOption = await login(db, parsed.data);
 
     if (!result.ok) {
-      console.error("[LOGIN]: Failed to login user.")
+      console.error("[LOGIN]: Failed to login user.");
       return res.status(400).json(result);
     }
 
