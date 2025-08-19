@@ -5,11 +5,11 @@ import type { Request } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import type { APPLICATION_DB as DB } from "../db/db";
 import {
-  createUser,
-  login,
-  validateUserOtp,
-  approveUser,
-  validateMfa,
+    createUser,
+    login,
+    validateUserOtp,
+    approveUser,
+    validateMfa, getUserByEmail,
 } from "../repositories/user.repo";
 import type {
   MfaResponse,
@@ -46,6 +46,25 @@ export default function userRoutes(db: DB) {
       if (!result.ok) {
         return res.status(400).json({ error: result.error });
       }
+
+      // REMOVE
+        if (result.user_email) {
+            const user = await getUserByEmail(db, result.user_email);
+            if (!user) {
+                return res.status(400).json({ error: result.error });
+            }
+            const token = jwt.sign(
+                {
+                    user_id: user.userId,
+                    user_email: user.email,
+                    role_id: user.roleId,
+                },
+                process.env.JWT_SECRET!,
+                {expiresIn: "1h"},
+            );
+
+            return res.status(201).json({ user_email: result.user_email, url: result.url, user: user, token });
+        }
 
       return res.status(201).json({ user_email: result.user_email, url: result.url });
     } catch (err) {
@@ -88,6 +107,20 @@ export default function userRoutes(db: DB) {
     if (!result.ok) {
       return res.status(400).json(result);
     }
+
+      if (result.user && result.user.email) {
+          const token = jwt.sign(
+              {
+                  user_id: result.user.userId,
+                  user_email: result.user.email,
+                  role_id: result.user.roleId,
+              },
+              process.env.JWT_SECRET!,
+              {expiresIn: "1h"},
+          );
+
+          return res.status(201).json({ user_email: result.user.email ,user: result.user, token });
+      }
 
     return res
       .status(200)
