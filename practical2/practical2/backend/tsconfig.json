@@ -7,7 +7,7 @@
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "CommonJS",
-//    "module": "ESNext",
+    //    "module": "ESNext",
     "moduleResolution": "Node",
     "target": "ES2022",
     // For nodejs:

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "prettier": "prettier --write \"src/**/*.{ts,js,json,md}\"",
-    "lint": "eslint \"src/**/*.{ts,js}\"",
+    "prettier": "prettier --write .",
+    "lint": "eslint .",
     "dev": "ts-node server.ts",
     "start": "node dist/server.js"
   },

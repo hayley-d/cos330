@@ -21,17 +21,21 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 function isInitialized(): boolean {
-  const row = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
-  ).get();
+  const row = db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='users';",
+    )
+    .get();
   return !!row;
 }
 
 export function migrate(): void {
   function isInitialized(): boolean {
-    const row = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
-    ).get();
+    const row = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='users';",
+      )
+      .get();
     return !!row;
   }
 
@@ -43,15 +47,15 @@ export function migrate(): void {
 
   // Strip line comments to avoid splitting troubles
   schema = schema
-      .split(/\r?\n/)
-      .filter((l) => !l.trim().startsWith("--"))
-      .join("\n");
+    .split(/\r?\n/)
+    .filter((l) => !l.trim().startsWith("--"))
+    .join("\n");
 
   // Split on semicolons that end a statement
   const statements = schema
-      .split(/;\s*(?:\r?\n|$)/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+    .split(/;\s*(?:\r?\n|$)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   db.exec("BEGIN");
   try {
@@ -80,10 +84,13 @@ export const app_db: APPLICATION_DB = {
     return Promise.resolve(db.prepare(sql).all(params) as T[]);
   },
   run(
-      sql: string,
-      params: any[] = [],
+    sql: string,
+    params: any[] = [],
   ): Promise<{ changes: number; lastID?: number }> {
     const result = db.prepare(sql).run(params);
-    return Promise.resolve({ changes: result.changes, lastID: result.lastInsertRowid as number });
+    return Promise.resolve({
+      changes: result.changes,
+      lastID: result.lastInsertRowid as number,
+    });
   },
 };

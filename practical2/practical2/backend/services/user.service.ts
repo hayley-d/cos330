@@ -22,8 +22,6 @@ export async function getGuestRoleId(db: DB): Promise<UUID> {
   return row.role_id;
 }
 
-
-
 export function validateAndNormalizeEmail(raw: string): ValidateEmailOption {
   const email: string = raw.trim().toLowerCase();
   if (email.length === 0) {

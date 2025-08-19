@@ -1,5 +1,5 @@
 import type { Email, IPAddr, UnixTime, UUID } from "../types";
-import {User} from "../schemas/user.schema";
+import { User } from "../schemas/user.schema";
 
 export interface CreateUserDTO {
   first_name: string;

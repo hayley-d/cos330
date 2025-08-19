@@ -54,7 +54,7 @@ export function userFromRow(row: UsersRow): User {
     lastSignInIp: row.last_sign_in_ip,
     roleId: row.role_id,
     mfaTotpSecret: row.mfa_totp_secret,
-    mfaEnrolledAt: row.mfa_enrolled_at
+    mfaEnrolledAt: row.mfa_enrolled_at,
   };
 }
 

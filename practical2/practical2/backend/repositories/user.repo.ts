@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { authenticator } from "otplib";
-import type { APPLICATION_DB as DB } from "../db/db"
+import type { APPLICATION_DB as DB } from "../db/db";
 import type { UUID, Email } from "../types";
 import { userFromRow } from "../types";
 import {
@@ -26,9 +26,13 @@ import type {
 } from "../types/user.types";
 
 import { getRoleById } from "../services/role.service";
-import {ListAssetsOption} from "../types/asset.types";
-import {Asset, ListAssetItem, ListAssetItemSchema} from "../schemas/asset.schema";
-import {User, UserSchema} from "../schemas/user.schema";
+import { ListAssetsOption } from "../types/asset.types";
+import {
+  Asset,
+  ListAssetItem,
+  ListAssetItemSchema,
+} from "../schemas/asset.schema";
+import { User, UserSchema } from "../schemas/user.schema";
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
   const row = await db.get<User>("SELECT * FROM users WHERE user_id = ?", [
@@ -38,19 +42,16 @@ export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
   return row ? row : null;
 }
 
-
 export async function getUserList(
-    db: DB,
-): Promise<{ ok: boolean, items:User[]}> {
-  const rows = await db.all<User>(`SELECT * FROM users`, [],);
+  db: DB,
+): Promise<{ ok: boolean; items: User[] }> {
+  const rows = await db.all<User>(`SELECT * FROM users`, []);
 
   if (!rows) {
     return { ok: false, items: [] };
   }
 
-  const parsedRows : User[] = rows.map(
-      (row) => UserSchema.parse(row)
-  )
+  const parsedRows: User[] = rows.map((row) => UserSchema.parse(row));
 
   return { ok: true, items: parsedRows };
 }
@@ -199,7 +200,10 @@ export async function login(
     return { ok: false, error: "MFA not setup" };
   }
 
-  const isValidPassword = await verifyPassword(dto.password, user.password_hash);
+  const isValidPassword = await verifyPassword(
+    dto.password,
+    user.password_hash,
+  );
 
   if (!isValidPassword) {
     return { ok: false, error: "Password does not match." };
@@ -220,7 +224,10 @@ export async function validateUserOtp(
   const otp = dto.otp.trim();
 
   if (user && user.mfa_totp_secret) {
-    const ok = authenticator.verify({ token: otp, secret: user.mfa_totp_secret });
+    const ok = authenticator.verify({
+      token: otp,
+      secret: user.mfa_totp_secret,
+    });
     if (!ok) {
       await bumpLoginFailure(db, { user_id: user.user_id as UUID });
       return { ok: false, error: "Invalid OTP." };

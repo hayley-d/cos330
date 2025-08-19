@@ -1,22 +1,27 @@
-import type {APPLICATION_DB as DB} from "../db/db";
+import type { APPLICATION_DB as DB } from "../db/db";
 import crypto from "crypto";
-import {UUID} from "../types";
+import { UUID } from "../types";
 import {
-    AssetListOptions,
-    GetAssetOption, ListAssetsOption,
-    RequestAssetOption,
-    RequestOption
+  AssetListOptions,
+  GetAssetOption,
+  ListAssetsOption,
+  RequestAssetOption,
+  RequestOption,
 } from "../types/asset.types";
 import {
-    Asset,
-    assetSchema,
-    CreateAssetDto, DeleteAssetDto, ListAssetItem, ListAssetItemSchema, PatchAssetDto,
-    UpdateConfidentialAsset
+  Asset,
+  assetSchema,
+  CreateAssetDto,
+  DeleteAssetDto,
+  ListAssetItem,
+  ListAssetItemSchema,
+  PatchAssetDto,
+  UpdateConfidentialAsset,
 } from "../schemas/asset.schema";
 
 const MASTER_KEY_HEX = process.env.MASTER_KEY;
 if (!MASTER_KEY_HEX) {
-    throw new Error("MASTER_KEY not set in .env");
+  throw new Error("MASTER_KEY not set in .env");
 }
 export const MASTER_KEY = Buffer.from(MASTER_KEY_HEX, "hex");
 
@@ -36,25 +41,33 @@ function sha256Hex(buf: Buffer): string {
  * @param assetId
  */
 function hkdf32(masterKey: Buffer, keyId: string, assetId: string): Buffer {
-    const arr = crypto.hkdfSync(
-        "sha256",
-        masterKey,
-        Buffer.from(assetId, "utf8"),
-        Buffer.from(`asset-data:${keyId}`, "utf8"),
-        32,
-    );
-    return Buffer.from(arr);
+  const arr = crypto.hkdfSync(
+    "sha256",
+    masterKey,
+    Buffer.from(assetId, "utf8"),
+    Buffer.from(`asset-data:${keyId}`, "utf8"),
+    32,
+  );
+  return Buffer.from(arr);
 }
 
-export async function getAsset(db: DB, assetId: UUID): Promise<RequestAssetOption> {
-  const row : Asset | undefined = await db.get<Asset>(`SELECT * FROM asset WHERE asset_id = ?`, [assetId,]);
+export async function getAsset(
+  db: DB,
+  assetId: UUID,
+): Promise<RequestAssetOption> {
+  const row: Asset | undefined = await db.get<Asset>(
+    `SELECT * FROM asset WHERE asset_id = ?`,
+    [assetId],
+  );
   if (!row) {
-      return { ok: false, error: "Failed to find asset" }
+    return { ok: false, error: "Failed to find asset" };
   }
 
   const parsed = assetSchema.parse(row);
 
-  return parsed ? { ok : true, asset: parsed } : { ok: false, error: "Error fetching asset from the database" };
+  return parsed
+    ? { ok: true, asset: parsed }
+    : { ok: false, error: "Error fetching asset from the database" };
 }
 
 export async function listAssets(
@@ -71,7 +84,7 @@ export async function listAssets(
     type ? [type, limit, offset] : [limit, offset],
   );
 
-  return rows.map(row => assetSchema.parse(row));
+  return rows.map((row) => assetSchema.parse(row));
 }
 
 /**
@@ -106,31 +119,33 @@ export async function createPublicAsset(
   );
 
   if (!result || result.changes === 0) {
-      return { ok: false, error: "Failed to create public asset" };
+    return { ok: false, error: "Failed to create public asset" };
   }
 
   return { ok: true };
 }
 
-
 export async function getAssetList(
-    db: DB,
-    assetType: "image" | "confidential" | "document",
+  db: DB,
+  assetType: "image" | "confidential" | "document",
 ): Promise<ListAssetsOption> {
-    const rows = await db.all<Asset>(
-        `SELECT asset_id, file_name, description FROM asset WHERE asset_type = ? AND deleted_at IS NULL`,
-        [assetType],
-    );
+  const rows = await db.all<Asset>(
+    `SELECT asset_id, file_name, description FROM asset WHERE asset_type = ? AND deleted_at IS NULL`,
+    [assetType],
+  );
 
-    if (!rows) {
-        return { ok: false, error: `Unable to find assets of type ${assetType} in the database`}
-    }
+  if (!rows) {
+    return {
+      ok: false,
+      error: `Unable to find assets of type ${assetType} in the database`,
+    };
+  }
 
-    const parsedRows : ListAssetItem[] = rows.map(
-        (row) => ListAssetItemSchema.parse(row)
-    )
+  const parsedRows: ListAssetItem[] = rows.map((row) =>
+    ListAssetItemSchema.parse(row),
+  );
 
-    return { ok: true, items: parsedRows };
+  return { ok: true, items: parsedRows };
 }
 
 /**
@@ -149,9 +164,15 @@ export async function createConfidentialAsset(
 
   const nonce = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-  const aad = Buffer.from(`${asset.key_id}|confidential|${asset.mime_type}`, "utf8");
+  const aad = Buffer.from(
+    `${asset.key_id}|confidential|${asset.mime_type}`,
+    "utf8",
+  );
   cipher.setAAD(aad);
-  const ciphertext = Buffer.concat([cipher.update(asset.content), cipher.final()]);
+  const ciphertext = Buffer.concat([
+    cipher.update(asset.content),
+    cipher.final(),
+  ]);
   const tag = cipher.getAuthTag();
 
   const sha = sha256Hex(asset.content);
@@ -178,11 +199,11 @@ export async function createConfidentialAsset(
     ],
   );
 
-   if(!response || response.changes === 0) {
-       return { ok: false, error: "Failed to create confidential asset" };
-   }
+  if (!response || response.changes === 0) {
+    return { ok: false, error: "Failed to create confidential asset" };
+  }
 
-   return { ok: true };
+  return { ok: true };
 }
 
 /**
@@ -202,21 +223,21 @@ export async function getAssetBytes(
   );
 
   if (!row) {
-      return { ok: false, error: "Unable to find asset in the database"}
+    return { ok: false, error: "Unable to find asset in the database" };
   }
 
   if (row.asset_type !== "confidential") {
-      if (row.content) {
-          return { ok:true, mimeType: row.mime_type, bytes: row.content! }
-      } else{
-          return { ok:false, error: "Asset content not found" }
-      }
+    if (row.content) {
+      return { ok: true, mimeType: row.mime_type, bytes: row.content! };
+    } else {
+      return { ok: false, error: "Asset content not found" };
+    }
   }
 
   const dataKey = hkdf32(MASTER_KEY, row.key_id!, assetId);
 
   if (!row.payload_nonce) {
-      return { ok:false, error: "Asset is missing decrypt metadata" }
+    return { ok: false, error: "Asset is missing decrypt metadata" };
   }
 
   const decipher = crypto.createDecipheriv(
@@ -230,7 +251,7 @@ export async function getAssetBytes(
   decipher.setAAD(aad);
 
   if (!row.payload_tag) {
-      return { ok:false, error: "Asset is missing decrypt metadata" }
+    return { ok: false, error: "Asset is missing decrypt metadata" };
   }
 
   decipher.setAuthTag(row.payload_tag);
@@ -240,7 +261,12 @@ export async function getAssetBytes(
     decipher.final(),
   ]);
 
-  return { ok: true, mimeType: row.mime_type, asset_type: row.asset_type, bytes };
+  return {
+    ok: true,
+    mimeType: row.mime_type,
+    asset_type: row.asset_type,
+    bytes,
+  };
 }
 
 /**
@@ -248,18 +274,21 @@ export async function getAssetBytes(
  * @param db
  * @param props
  */
-export async function softDeleteAsset(db: DB, props: DeleteAssetDto): Promise<RequestOption> {
-  const result = await db.run(`UPDATE asset SET deleted_by = ?, deleted_at = unixepoch() WHERE asset_id = ? AND deleted_at IS NULL`, [
-    props.deleted_by,
-    props.asset_id,
-  ]);
+export async function softDeleteAsset(
+  db: DB,
+  props: DeleteAssetDto,
+): Promise<RequestOption> {
+  const result = await db.run(
+    `UPDATE asset SET deleted_by = ?, deleted_at = unixepoch() WHERE asset_id = ? AND deleted_at IS NULL`,
+    [props.deleted_by, props.asset_id],
+  );
 
   if (!result) {
-      return { ok: false, error: "Unable to find asset in the database" };
+    return { ok: false, error: "Unable to find asset in the database" };
   }
 
   if (result.changes === 0) {
-      return { ok: false, error: "Asset already deleted."}
+    return { ok: false, error: "Asset already deleted." };
   }
 
   return { ok: true };
@@ -284,16 +313,19 @@ export async function updateAssetMeta(
   if (patch.description !== undefined) push("description", patch.description);
   if (patch.file_name !== undefined) push("file_name", patch.file_name);
   if (patch.content !== undefined) {
-      const sha = sha256Hex(patch.content);
-      push("content", patch.content);
-      push("size_bytes",patch.content.length)
-      push("sha256", sha)
+    const sha = sha256Hex(patch.content);
+    push("content", patch.content);
+    push("size_bytes", patch.content.length);
+    push("sha256", sha);
   }
   push("mime_type", patch.mime_type);
   push("updated_by", patch.updated_by);
 
   if (sets.length === 0) {
-      return { ok: false, error: "Unable to update asset. No values provided to update." };
+    return {
+      ok: false,
+      error: "Unable to update asset. No values provided to update.",
+    };
   }
 
   vals.push(patch.asset_id);
@@ -302,7 +334,7 @@ export async function updateAssetMeta(
     vals,
   );
   if (!result || result.changes === 0) {
-      return { ok: false, error: "Unable to update asset." };
+    return { ok: false, error: "Unable to update asset." };
   }
 
   return { ok: true };
@@ -314,56 +346,59 @@ export async function updateAssetMeta(
  * @param asset
  */
 export async function updateConfidentialAsset(
-    db: DB,
-    asset: UpdateConfidentialAsset
+  db: DB,
+  asset: UpdateConfidentialAsset,
 ): Promise<RequestOption> {
-    const sets: string[] = [];
-    const vals: string[] = [];
+  const sets: string[] = [];
+  const vals: string[] = [];
 
-    const push = (c: string, v: any) => {
-        sets.push(`${c} = ?`);
-        vals.push(v);
-    };
+  const push = (c: string, v: any) => {
+    sets.push(`${c} = ?`);
+    vals.push(v);
+  };
 
-    push("updated_by", asset.updated_by);
+  push("updated_by", asset.updated_by);
 
-    if (asset.description) {
-        push("description", asset.description);
-    }
+  if (asset.description) {
+    push("description", asset.description);
+  }
 
-    if (asset.file_name) {
-        push("file_name", asset.file_name);
-    }
+  if (asset.file_name) {
+    push("file_name", asset.file_name);
+  }
 
-    if (asset.content) {
-        const keyId = "v1";
-        const dataKey = hkdf32(MASTER_KEY, keyId, asset.asset_id);
-        const nonce = crypto.randomBytes(12);
-        const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-        const aad = Buffer.from(`${asset.asset_id}|confidential|txt`, "utf8");
-        cipher.setAAD(aad);
-        const ciphertext = Buffer.concat([cipher.update(asset.content), cipher.final()]);
-        const tag = cipher.getAuthTag();
-        push("payload_ciphertext", ciphertext);
-        push("payload_nonce", nonce);
-        push("payload_tag", tag);
-        push("key_id", keyId);
-    }
+  if (asset.content) {
+    const keyId = "v1";
+    const dataKey = hkdf32(MASTER_KEY, keyId, asset.asset_id);
+    const nonce = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
+    const aad = Buffer.from(`${asset.asset_id}|confidential|txt`, "utf8");
+    cipher.setAAD(aad);
+    const ciphertext = Buffer.concat([
+      cipher.update(asset.content),
+      cipher.final(),
+    ]);
+    const tag = cipher.getAuthTag();
+    push("payload_ciphertext", ciphertext);
+    push("payload_nonce", nonce);
+    push("payload_tag", tag);
+    push("key_id", keyId);
+  }
 
-    if (sets.length === 0) {
-        return { ok: false, error: "Nothing to update." }
-    }
+  if (sets.length === 0) {
+    return { ok: false, error: "Nothing to update." };
+  }
 
-    vals.push(asset.asset_id);
+  vals.push(asset.asset_id);
 
-    const result = await db.run(
-        `UPDATE asset SET ${sets.join(", ")}, updated_at = unixepoch() WHERE asset_id = ?`,
-        vals,
-    );
+  const result = await db.run(
+    `UPDATE asset SET ${sets.join(", ")}, updated_at = unixepoch() WHERE asset_id = ?`,
+    vals,
+  );
 
-    if (!result || result.changes === 0) {
-        return { ok: false, error: "Failed to update asset." }
-    }
+  if (!result || result.changes === 0) {
+    return { ok: false, error: "Failed to update asset." };
+  }
 
-    return { ok: true }
+  return { ok: true };
 }

@@ -4,8 +4,12 @@ import fs from "fs";
 
 import userRoutes from "./routes/user.routes";
 import { app_db, migrate } from "./db/db";
-import {makeRequestLogger} from "./middleware/log.middleware";
-import { imageRoutes, documentRoutes, confidentialRoutes } from "./routes/asset.routes";
+import { makeRequestLogger } from "./middleware/log.middleware";
+import {
+  imageRoutes,
+  documentRoutes,
+  confidentialRoutes,
+} from "./routes/asset.routes";
 
 const options = {
   key: fs.readFileSync("./certs/key.pem"),
