@@ -194,7 +194,7 @@ export async function login(
   const user: User | null = await getUserByEmail(db, dto.user_email as Email);
   if (!user) {
     console.error("[LOGIN]: Failed to find user in db.");
-    return { ok: false, error: "User not found." };
+    return { ok: false, error: "Invalid login credentials." };
   }
 
   // const isSetup = await isMfaSetup(db, user.user_id as UUID);
@@ -209,7 +209,7 @@ export async function login(
   );
 
   if (!isValidPassword) {
-    return { ok: false, error: "Password does not match." };
+    return { ok: false, error: "Invalid login credentials." };
   }
 
   return { ok: true, user };

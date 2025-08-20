@@ -3,7 +3,7 @@ import { z } from "zod";
 export const CreateUserDTOSchema = z.object({
   first_name: z.string().min(1),
   last_name: z.string().min(1),
-  email: z.string().email(),
+  email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(8),
 });
 
@@ -36,10 +36,10 @@ const uuidV4Regex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const UserSchema = z.object({
-  user_id: z.string().regex(uuidV4Regex, "role_id must be a valid UUID v4"),
+  user_id: z.string().regex(uuidV4Regex, "user_id must be a valid UUID v4"),
   first_name: z.string().min(1).max(50),
   last_name: z.string().min(1).max(50),
-  email: z.string().email(),
+  email: z.string().email({ message: "Invalid email address" }),
   password_hash: z.string(),
   created_at: z.number().default(0),
   last_login: z.number().default(0).nullable(),
