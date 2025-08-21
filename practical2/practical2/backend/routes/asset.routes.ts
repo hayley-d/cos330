@@ -29,9 +29,9 @@ import { getAssetList } from "../repositories/asset.repo";
 const router = Router();
 
 export function imageRoutes(db: DB) {
-  router.get("/list", async (req: Request<{}, {}, ValidateMfaDto>, res) => {
+  router.get("/list", async (req, res) => {
     try {
-      const result = await getAssetList(db, "confidential");
+      const result = await getAssetList(db, "image");
 
       if (!result.ok) {
         return res.status(400).json({ error: result.error });
@@ -125,9 +125,9 @@ export function imageRoutes(db: DB) {
 }
 
 export function documentRoutes(db: DB) {
-  router.get("/list", async (req: Request<{}, {}, ValidateMfaDto>, res) => {
+  router.get("/list", async (req, res) => {
     try {
-      const result = await getAssetList(db, "confidential");
+      const result = await getAssetList(db, "document");
 
       if (!result.ok) {
         return res.status(400).json({ error: result.error });
