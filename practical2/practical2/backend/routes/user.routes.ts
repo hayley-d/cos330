@@ -10,7 +10,6 @@ import {
   validateUserOtp,
   approveUser,
   validateMfa,
-  getUserByEmail,
   getUserList,
 } from "../repositories/user.repo";
 import type {
@@ -59,30 +58,6 @@ export default function userRoutes(db: DB) {
         return res.status(400).json({ error: result.error });
       }
 
-      // REMOVE
-      if (result.user_email) {
-        const user = await getUserByEmail(db, result.user_email);
-        if (!user) {
-          return res.status(400).json({ error: result.error });
-        }
-        const token = jwt.sign(
-          {
-            user_id: user.user_id,
-            user_email: user.email,
-            role_id: user.role_id,
-          },
-          process.env.JWT_SECRET!,
-          { expiresIn: "1h" },
-        );
-
-        return res.status(201).json({
-          user_email: result.user_email,
-          url: result.url,
-          user: user,
-          token,
-        });
-      }
-
       return res
         .status(201)
         .json({ user_email: result.user_email, url: result.url });
@@ -103,7 +78,7 @@ export default function userRoutes(db: DB) {
           return res.status(400).json({ error: parsed.error.flatten });
         }
 
-        const result = await validateMfa(db, req.body);
+        const result = await validateMfa(db, parsed.data);
 
         if (!result.ok) {
           return res.status(400).json({ error: result.error });
@@ -134,23 +109,7 @@ export default function userRoutes(db: DB) {
       return res.status(400).json(result);
     }
 
-    if (result.user && result.user.email) {
-      const token = jwt.sign(
-        {
-          user_id: result.user.user_id,
-          user_email: result.user.email,
-          role_id: result.user.role_id,
-        },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1h" },
-      );
-
-      return res
-        .status(201)
-        .json({ user_email: result.user.email, user: result.user, token });
-    }
-
-    return res.status(200).json({
+    return res.status(201).json({
       mfa_required: true,
       user_id: result.user?.user_id,
       user_email: result.user?.email,

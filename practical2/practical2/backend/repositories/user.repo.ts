@@ -29,7 +29,7 @@ import {
   ListUserSchema,
   User,
   UserLoginDto,
-  UserSchema,
+  UserSchema, validateMfaDto,
 } from "../schemas/user.schema";
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
@@ -197,11 +197,11 @@ export async function login(
     return { ok: false, error: "Invalid login credentials." };
   }
 
-  // const isSetup = await isMfaSetup(db, user.user_id as UUID);
-  // if (!isSetup) {
-  //   console.error("[LOGIN]: User has not been setup");
-  //   return { ok: false, error: "MFA not setup" };
-  // }
+  const isSetup = await isMfaSetup(db, user.user_id as UUID);
+  if (!isSetup) {
+    console.error("[LOGIN]: User has not been setup");
+    return { ok: false, error: "MFA not setup" };
+  }
 
   const isValidPassword = await verifyPassword(
     dto.password,
@@ -246,9 +246,9 @@ export async function validateUserOtp(
 
 export async function validateMfa(
   db: DB,
-  dto: ValidateMfaDto,
-): Promise<RequestOption> {
-  const user: User | null = await getUserByEmail(db, dto.user_email);
+  dto: validateMfaDto,
+): Promise<RequestUserOption> {
+  const user: User | null = await getUserByEmail(db, dto.user_email as Email);
   if (!user || !user.mfa_totp_secret) {
     return { ok: false, error: "User not found." };
   }
@@ -266,7 +266,7 @@ export async function validateMfa(
     [user.user_id],
   );
 
-  return { ok: true };
+  return { ok: true, user: user };
 }
 
 export async function isMfaSetup(db: DB, userId: UUID): Promise<boolean> {
