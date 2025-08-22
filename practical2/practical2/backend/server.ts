@@ -21,12 +21,13 @@ const app = express();
 migrate();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(makeRequestLogger(app_db));
-app.use(userRoutes(app_db));
+app.use("/",userRoutes(app_db));
 app.use("/images", imageRoutes(app_db));
 app.use("/documents", documentRoutes(app_db));
 app.use("/confidential", confidentialRoutes(app_db));
 
-https.createServer(options, app).listen(3000, () => {
-  console.log("HTTPS Express server running on https://localhost:3000");
+https.createServer(options, app).listen(3800, () => {
+  console.log("HTTPS Express server running on https://localhost:3800");
 });

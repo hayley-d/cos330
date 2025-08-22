@@ -45,8 +45,10 @@ export function imageRoutes(db: DB) {
     }
   });
 
-  router.get("/:user_id/:asset_id", async (req, res) => {
-    const { asset_id, user_id } = req.params;
+  router.get("/:asset_id", async (req, res) => {
+    const { asset_id,  } = req.params;
+    // @ts-ignore
+      const { user_id } = req.user.user_id;
 
     const parsed = ReadAssetSchema.safeParse({ asset_id, user_id });
 
@@ -141,8 +143,10 @@ export function documentRoutes(db: DB) {
     }
   });
 
-  router.get("/:user_id/:asset_id", async (req, res) => {
-    const { asset_id, user_id } = req.params;
+  router.get("/:asset_id", async (req, res) => {
+    const { asset_id } = req.params;
+    // @ts-ignore
+      const { user_id } = req.user.user_id;
 
     const parsed = ReadAssetSchema.safeParse({ asset_id, user_id });
 

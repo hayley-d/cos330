@@ -72,13 +72,16 @@ export async function createUser(
   dto: CreateUserDTO,
 ): Promise<MfaResponse> {
   const validated_email = validateAndNormalizeEmail(dto.email);
+
   if (!validated_email.ok) {
+    console.error("Invalid email address")
     return { ok: false, error: "Invalid email address" };
   }
   const email = validated_email.email as Email;
 
   const validate_psw = validatePassword(dto.password);
   if (!validate_psw.ok) {
+    console.error("Invalid password")
     return { ok: false, error: "Invalid password" };
   }
 
@@ -250,6 +253,7 @@ export async function validateMfa(
 ): Promise<RequestUserOption> {
   const user: User | null = await getUserByEmail(db, dto.user_email as Email);
   if (!user || !user.mfa_totp_secret) {
+    console.error("user not found.")
     return { ok: false, error: "User not found." };
   }
 

@@ -26,7 +26,7 @@ import {
   CreateUserDTOSchema,
   UpdateUserRoleSchema,
   UserLoginDto,
-  UserLoginSchema,
+  UserLoginSchema, validateMfaDto,
   ValidateMfaSchema,
   ValidateOtpSchema,
 } from "../schemas/user.schema";
@@ -49,19 +49,24 @@ export default function userRoutes(db: DB) {
       const parsed = CreateUserDTOSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        return res.status(400).json({ error: parsed.error.flatten });
+        return res.status(400).json({ error: "Invlid payload" });
       }
 
       const result: MfaResponse = await createUser(db, req.body);
 
+
       if (!result.ok) {
-        return res.status(400).json({ error: result.error });
+        console.error("Failed to create new user")
+        return res.status(400).json({ error: "Failed to create user" });
       }
+
+      console.log("USER EMAIL", result.user_email)
 
       return res
         .status(201)
         .json({ user_email: result.user_email, url: result.url });
     } catch (err) {
+      console.error("Some other issue")
       return res
         .status(500)
         .json({ ok: false, error: "Internal server error" });
@@ -70,17 +75,20 @@ export default function userRoutes(db: DB) {
 
   router.post(
     "/two_factor",
-    async (req: Request<{}, {}, ValidateMfaDto>, res) => {
+    async (req: Request<{}, {}, validateMfaDto>, res) => {
       try {
         const parsed = ValidateMfaSchema.safeParse(req.body);
 
         if (!parsed.success) {
+          console.error("Failed to verity payload")
+          console.error(parsed.error.flatten)
           return res.status(400).json({ error: parsed.error.flatten });
         }
 
         const result = await validateMfa(db, parsed.data);
 
         if (!result.ok) {
+          console.error("Failed to verity MFA")
           return res.status(400).json({ error: result.error });
         }
 
