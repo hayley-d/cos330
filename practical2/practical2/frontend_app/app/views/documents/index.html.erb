@@ -1,0 +1,30 @@
+<div class="min-h-screen bg-gray-100 p-8">
+  <div class="max-w-4xl mx-auto bg-white shadow-md rounded p-6">
+    <h1 class="text-2xl font-bold mb-6">Documents</h1>
+
+    <% if @documents.any? %>
+      <table class="w-full border-collapse">
+        <thead>
+        <tr class="bg-gray-200 text-left">
+          <th class="p-3">Name</th>
+          <th class="p-3">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @documents.each do |doc| %>
+          <tr class="border-b">
+            <td class="p-3"><%= doc["name"] %></td>
+            <td class="p-3">
+              <%= link_to "Download",
+                          download_document_path(doc["id"]),
+                          class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-gray-600">No documents available.</p>
+    <% end %>
+  </div>
+</div>

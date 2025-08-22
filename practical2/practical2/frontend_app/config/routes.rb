@@ -7,16 +7,26 @@ Rails.application.routes.draw do
   post   "/login",    to: "sessions#create"
   delete "/logout",   to: "sessions#destroy"
 
-  get    "/register", to: "registrations#new"
-  post   "/register", to: "registrations#create"
-  #
-  # get    "/otp",      to: "otp#new"
-  # post   "/otp",      to: "otp#create"
+  get "register", to: "sessions#new_register"
+  post "register", to: "sessions#create_register"
+
+  get "setup_mfa", to: "sessions#setup_mfa"
+  post "setup_mfa", to: "sessions#verify_mfa"
+
+  get "otp", to: "sessions#otp"
+  post "otp", to: "sessions#verify_otp"
+
+  delete "logout", to: "sessions#destroy"
 
   shallow do
     resources :roles
     resources :images
-    resources :documents
+    resources :documents, only: [ :index, :new, :create, :edit, :update ] do
+      member do
+        get :download
+      end
+    end
+
   end
 
 
