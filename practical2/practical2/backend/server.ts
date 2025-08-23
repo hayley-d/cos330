@@ -10,6 +10,7 @@ import {
   documentRoutes,
   confidentialRoutes,
 } from "./routes/asset.routes";
+import rolesRoutes from "./routes/roles.routes";
 
 const options = {
   key: fs.readFileSync("./certs/key.pem"),
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(makeRequestLogger(app_db));
 app.use("/",userRoutes(app_db));
+app.use("/",rolesRoutes(app_db));
 app.use("/images", imageRoutes(app_db));
 app.use("/documents", documentRoutes(app_db));
 app.use("/confidential", confidentialRoutes(app_db));

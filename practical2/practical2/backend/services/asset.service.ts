@@ -29,7 +29,7 @@ import { User } from "../schemas/user.schema";
 export async function getAssetByID(
   db: DB,
   props: ReadAssetDto,
-): Promise<RequestAssetOption> {
+): Promise<GetAssetOption> {
   const user: User | null = await getUserById(db, props.user_id as UUID);
   const asset: GetAssetOption = await getAssetBytes(db, props.asset_id as UUID);
 

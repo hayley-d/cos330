@@ -146,6 +146,7 @@ export default function userRoutes(db: DB) {
     const result = await validateUserOtp(db, req.body);
 
     if (!result.ok) {
+      console.error("[LOGIN]: Failed to verify token");
       return res.status(400).json(result);
     }
 

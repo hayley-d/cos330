@@ -23,13 +23,13 @@ import {
   updateAsset,
   updateConfidentialAsset,
 } from "../services/asset.service";
-import { RequestAssetOption } from "../types/asset.types";
+import {GetAssetOption, RequestAssetOption} from "../types/asset.types";
 import { getAssetList } from "../repositories/asset.repo";
 
 const router = Router();
 
 export function imageRoutes(db: DB) {
-  router.get("/list", async (req, res) => {
+  router.get("/list", authMiddleware, async (req, res) => {
     try {
       const result = await getAssetList(db, "image");
 
@@ -45,7 +45,7 @@ export function imageRoutes(db: DB) {
     }
   });
 
-  router.get("/:asset_id", async (req, res) => {
+  router.get("/:asset_id", authMiddleware,  async (req, res) => {
     const { asset_id,  } = req.params;
     // @ts-ignore
       const { user_id } = req.user.user_id;
@@ -56,16 +56,16 @@ export function imageRoutes(db: DB) {
       return res.status(400).json({ error: parsed.error.flatten });
     }
 
-    const result: RequestAssetOption = await getAssetByID(db, parsed.data);
+    const result: GetAssetOption = await getAssetByID(db, parsed.data);
 
-    if (!result.ok || !result.asset) {
+    if (!result.ok) {
       return res.status(400).json(result);
     }
 
-    return res.status(200).json(result.asset);
+    return res.status(200).json(result);
   });
 
-  router.post("/", async (req: Request<{}, {}, CreateAssetDto>, res) => {
+  router.post("/", authMiddleware, async (req: Request<{}, {}, CreateAssetDto>, res) => {
     const parsed = createAssetSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -143,8 +143,8 @@ export function documentRoutes(db: DB) {
     }
   });
 
-  router.get("/:asset_id", async (req, res) => {
-    const { asset_id } = req.params;
+  router.get("/:asset_id", authMiddleware,  async (req, res) => {
+    const { asset_id,  } = req.params;
     // @ts-ignore
       const { user_id } = req.user.user_id;
 
@@ -154,13 +154,13 @@ export function documentRoutes(db: DB) {
       return res.status(400).json({ error: parsed.error.flatten });
     }
 
-    const result: RequestAssetOption = await getAssetByID(db, parsed.data);
+    const result: GetAssetOption = await getAssetByID(db, parsed.data);
 
-    if (!result.ok || !result.asset) {
+    if (!result.ok) {
       return res.status(400).json(result);
     }
 
-    return res.status(200).json(result.asset);
+    return res.status(200).json(result);
   });
 
   router.post("/", async (req: Request<{}, {}, CreateAssetDto>, res) => {
@@ -241,8 +241,10 @@ export function confidentialRoutes(db: DB) {
     }
   });
 
-  router.get("/:user_id/:asset_id", async (req, res) => {
-    const { asset_id, user_id } = req.params;
+  router.get("/:asset_id", authMiddleware,  async (req, res) => {
+    const { asset_id,  } = req.params;
+    // @ts-ignore
+      const { user_id } = req.user.user_id;
 
     const parsed = ReadAssetSchema.safeParse({ asset_id, user_id });
 
@@ -250,13 +252,13 @@ export function confidentialRoutes(db: DB) {
       return res.status(400).json({ error: parsed.error.flatten });
     }
 
-    const result: RequestAssetOption = await getAssetByID(db, parsed.data);
+    const result: GetAssetOption = await getAssetByID(db, parsed.data);
 
-    if (!result.ok || !result.asset) {
+    if (!result.ok) {
       return res.status(400).json(result);
     }
 
-    return res.status(200).json(result.asset);
+    return res.status(200).json(result);
   });
 
   router.post("/", async (req: Request<{}, {}, CreateAssetDto>, res) => {

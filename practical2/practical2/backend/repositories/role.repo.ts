@@ -59,12 +59,14 @@ export async function roleHasPermission(
   roleId: string,
   permission: string,
 ): Promise<boolean> {
+  console.log(`SELECT * FROM roles WHERE role_id = ${roleId.toString()}`)
   const row: Role | undefined = await db.get<Role>(
     "SELECT * FROM roles WHERE role_id = ?",
-    [roleId],
+    [roleId.toString()],
   );
 
   if (!row) {
+    console.error("[ROLE REPO]: Failed to find role.");
     return false;
   }
 
@@ -72,6 +74,7 @@ export async function roleHasPermission(
     const parsed = roleSchema.parse(row);
 
     const permissions = parsed.permissions as Record<string, string[]>;
+    console.log("[DEBUG PERMISSIONS]", permissions, "looking for", permission);
 
     return Object.values(permissions).some((permArray) =>
       permArray.includes(permission),

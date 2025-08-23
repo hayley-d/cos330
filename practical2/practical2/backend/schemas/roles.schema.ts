@@ -30,4 +30,9 @@ export const roleSchema = z.object({
   }),
 });
 
+export const hasAccessSchema = z.object({
+  permission: z.string().min(3, "Permission required")
+})
+
 export type Role = z.infer<typeof roleSchema>;
+export type HasAccessDto = z.infer<typeof hasAccessSchema>;
