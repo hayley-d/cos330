@@ -220,7 +220,7 @@ export async function getAssetBytes(
   assetId: UUID,
 ): Promise<GetAssetOption> {
   const row = await db.get<Asset>(
-    `SELECT mime_type, asset_type, content,
+    `SELECT file_name, description, mime_type, asset_type, content,
             payload_ciphertext, payload_nonce, payload_tag, key_id
      FROM asset WHERE asset_id = ? AND deleted_at IS NULL`,
     [assetId],
@@ -232,7 +232,7 @@ export async function getAssetBytes(
 
   if (row.asset_type !== "confidential") {
     if (row.content) {
-      return { ok: true, mimeType: row.mime_type, bytes: row.content! };
+      return { ok: true, mimeType: row.mime_type, bytes: row.content!, description: row.description!, file_name: row.file_name! };
     } else {
       return { ok: false, error: "Asset content not found" };
     }

@@ -113,13 +113,47 @@ export const assetSchema = z
 export const createAssetSchema = z.object({
   file_name: z.string().max(50).transform(sanitizeString),
   mime_type: z.string().max(100),
-  content: z.instanceof(Buffer),
+    content: z.string().transform((val, ctx) => {
+        try {
+            return Buffer.from(val, "base64");
+        } catch {
+            ctx.addIssue({
+                code: "custom",
+                message: "content must be valid base64",
+            });
+            return z.NEVER;
+        }
+    }),
   created_by: z.string().regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
   description: z.string().max(255).transform(sanitizeString),
   asset_type: z.enum(["image", "document", "confidential"]),
   key_id: z.string().max(100).optional().default("v1"),
 });
 
+export const createDocumentSchema = z.object({
+    file_name: z.string().max(50).transform(sanitizeString),
+    mime_type: z.string().max(100),
+
+    content: z.array(z.number().int().min(0).max(255))
+        .transform((arr) => Buffer.from(arr)),
+
+    created_by: z.string().regex(uuidV4Regex, "asset_id must be a valid UUID v4"),
+    description: z.string().max(255).transform(sanitizeString),
+    asset_type: z.enum(["image", "document", "confidential"]),
+    key_id: z.string().max(100).optional().default("v1"),
+});
+
+export const createConfidentialSchema = z.object({
+    file_name: z.string().max(50).transform(sanitizeString),
+    mime_type: z.string().max(100).default("text/plain"),
+    content: z.string().transform((val) => Buffer.from(val, "utf-8")),
+    created_by: z.string().regex(uuidV4Regex, "created_by must be a valid UUID v4"),
+    description: z.string().max(255).transform(sanitizeString),
+    asset_type: z.literal("confidential"),   // enforce only confidential here
+    key_id: z.string().max(100).optional().default("v1"),
+});
+
+export type createConfidentialDto = z.infer<typeof createConfidentialSchema>;
 export type DeleteAssetDto = z.infer<typeof DeleteAssetSchema>;
 export type Asset = z.infer<typeof assetSchema>;
 export type CreateAssetDto = z.infer<typeof createAssetSchema>;
@@ -127,3 +161,4 @@ export type UpdateConfidentialAsset = z.infer<typeof confPatchSchema>;
 export type ReadAssetDto = z.infer<typeof ReadAssetSchema>;
 export type ListAssetItem = z.infer<typeof ListAssetItemSchema>;
 export type PatchAssetDto = z.infer<typeof AssetPatchSchema>;
+export type createDocumentDto = z.infer<typeof createDocumentSchema>;

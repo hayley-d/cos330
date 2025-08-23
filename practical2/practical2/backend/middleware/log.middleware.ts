@@ -29,6 +29,7 @@ export function makeRequestLogger(db: DB) {
       next: NextFunction,
   ) {
     const requestId: string = randomUUID();
+    console.log(req.originalUrl)
     const endpoint: string = req.originalUrl.split("?")[0]?.slice(0, 50) ?? "";
     const originIp: string = req.ip || req.socket.remoteAddress || "unknown";
 

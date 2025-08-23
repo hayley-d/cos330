@@ -28,11 +28,9 @@ export default function rolesRoutes(db: DB) {
         const result = await roleHasPermission(db,user.role_id, parsed.data.permission);
 
         if (!result) {
-            console.error("Access denied for the role");
             return res.status(400).json(result);
         }
 
-        console.log("Access granted for the role");
         return res.status(200).json(result);
     });
     return router;

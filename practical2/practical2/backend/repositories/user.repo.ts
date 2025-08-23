@@ -34,7 +34,7 @@ import {
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
   const row = await db.get<User>("SELECT * FROM users WHERE user_id = ?", [
-    userId,
+    userId.toString(),
   ]);
 
   return row ? row : null;

@@ -27,6 +27,8 @@ export type GetAssetOption = {
   error?: string;
   mimeType?: string;
   bytes?: Buffer;
+  description?: string;
+  file_name?: string;
   asset_type?: "confidential" | "image" | "document";
 };
 
