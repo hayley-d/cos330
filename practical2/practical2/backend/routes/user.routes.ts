@@ -15,7 +15,6 @@ import {
 import type {
   MfaResponse,
   CreateUserDTO,
-  ValidateMfaDto,
   RequestUserOption,
   ValidateOtpDto,
   ApproveUserDto,
@@ -92,7 +91,20 @@ export default function userRoutes(db: DB) {
           return res.status(400).json({ error: result.error });
         }
 
-        return res.status(200);
+        const token = jwt.sign(
+            {
+              user_id: result.user?.user_id,
+              user_email: result.user?.email,
+              role_id: result.user?.role_id,
+            },
+            process.env.JWT_SECRET!,
+            { expiresIn: "1h" },
+        );
+
+        return res.status(200).json({
+          ok: true,
+          token,
+        });
       } catch (err) {
         return res
           .status(500)

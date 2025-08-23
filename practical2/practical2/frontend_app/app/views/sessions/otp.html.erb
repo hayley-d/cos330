@@ -2,7 +2,7 @@
   <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
     <h1 class="text-2xl font-bold mb-6">Enter OTP</h1>
 
-    <%= form_with url: verify_otp_path, method: :post, local: true do |f| %>
+    <%= form_with url: setup_mfa_path, method: :post, local: true do |f| %>
       <div class="mb-4">
         <%= f.label :otp, "One-Time Password", class: "block text-sm font-medium text-gray-700" %>
         <%= f.text_field :otp, class: "mt-1 block w-full border border-gray-300 rounded-md p-2" %>

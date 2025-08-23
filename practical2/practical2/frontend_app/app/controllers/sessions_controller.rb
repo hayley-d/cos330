@@ -11,7 +11,7 @@ class SessionsController < ApplicationController
   def login
     conn = Faraday.new(url: BACKEND_BASE_URL, ssl: { verify: false })
     response = conn.post("#{BACKEND_BASE_URL}/login", {
-      email: params[:email],
+      user_email: params[:email],
       password: params[:password]
     })
 
@@ -34,6 +34,7 @@ class SessionsController < ApplicationController
     conn = Faraday.new(url: BACKEND_BASE_URL, ssl: { verify: false })
     response = conn.post("#{BACKEND_BASE_URL}/verify", {
       user_id: session[:pending_user],
+      current_ip: request.remote_ip,
       otp: params[:otp]
     })
 
@@ -42,50 +43,10 @@ class SessionsController < ApplicationController
     if body["ok"]
       session[:jwt] = body["token"]
       flash[:notice] = "Logged in successfully"
-      redirect_to documents_path
+      redirect_to home_path
     else
       flash[:alert] = "Invalid OTP"
       render :otp, status: :unprocessable_entity
-    end
-  end
-
-  def register
-    conn = Faraday.new(url: BACKEND_BASE_URL, ssl: { verify: false })
-    response = conn.post("#{BACKEND_BASE_URL}/login", {
-      user_email: params[:email],
-      password: params[:password]
-    })
-
-    body = JSON.parse(response.body)
-
-    if body["ok"]
-      if body["requires_otp"]
-        session[:pending_user] = body["user_email"]
-        redirect_to otp_path
-      end
-    else
-      flash[:alert] = "Invalid login credentials"
-      render :new, status: :unprocessable_entity
-    end
-  end
-
-  def opt
-    conn = Faraday.new(url: BACKEND_BASE_URL, ssl: { verify: false })
-    response = conn.post("#{BACKEND_BASE_URL}/login", {
-      user_email: params[:email],
-      password: params[:password]
-    })
-
-    body = JSON.parse(response.body)
-
-    if body["ok"]
-      if body["requires_otp"]
-        session[:pending_user] = body["user_email"]
-        redirect_to otp_path
-      end
-    else
-      flash[:alert] = "Invalid login credentials"
-      render :new, status: :unprocessable_entity
     end
   end
 
@@ -125,13 +86,13 @@ class SessionsController < ApplicationController
       token: params[:otp]
     })
 
-    body = JSON.parse(response.body)
-
     if response.status == 200
-      flash[:notice] = "MFA setup complete. Please login."
-      redirect_to login_path
+      body = JSON.parse(response.body)
+      session[:jwt] = body["token"]
+      flash[:notice] = "Welcome! Your account is now verified."
+      redirect_to home_path
     else
-      flash[:alert] = body["error"] || "Invalid OTP"
+      flash[:alert] = "Invalid OTP"
       redirect_to setup_mfa_path
     end
   end

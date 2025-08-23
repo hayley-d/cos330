@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   get    "/login",    to: "sessions#new"
-  post   "/login",    to: "sessions#create"
+  post   "/login",    to: "sessions#login"
   delete "/logout",   to: "sessions#destroy"
 
   get "register", to: "sessions#new_register"
@@ -18,9 +18,12 @@ Rails.application.routes.draw do
 
   delete "logout", to: "sessions#destroy"
 
+  get "home", to: "home#index"
+
   shallow do
     resources :roles
     resources :images
+    resources :confidential
     resources :documents, only: [ :index, :new, :create, :edit, :update ] do
       member do
         get :download
