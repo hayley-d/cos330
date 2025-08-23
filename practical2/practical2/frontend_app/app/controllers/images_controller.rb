@@ -3,8 +3,8 @@
 class ImagesController < ApplicationController
 
   def index
-    conn = Faraday.new(url: "#{BACKEND_BASE_URL}/images", ssl: { verify: false })
-    response = conn.get("/list") do |req|
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    response = conn.get("/images/list") do |req|
       req.headers["Authorization"] = "Bearer #{session[:jwt]}"
     end
 
@@ -31,13 +31,18 @@ class ImagesController < ApplicationController
       redirect_to images_path and return
     end
 
-    conn = Faraday.new(url: "#{BACKEND_BASE_URL}/images", ssl: { verify: false })
-    response = conn.get("/#{asset_id}") do |req|
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    response = conn.get("/images/#{asset_id}") do |req|
       req.headers["Authorization"] = "Bearer #{session[:jwt]}"
     end
 
     if response.status == 200
       @image = JSON.parse(response.body)
+      @asset_id = params[:id]
+      byte_array = @image["bytes"]["data"]
+      binary = byte_array.pack("C*")
+      @image_base64 = Base64.strict_encode64(binary)
+      @mime_type = @image["mimeType"].presence || "image/jpeg"
     else
       flash[:alert] = "Failed to load image"
       redirect_to images_path
@@ -46,13 +51,13 @@ class ImagesController < ApplicationController
 
 
   def update
-    conn = Faraday.new(url: "#{BACKEND_BASE_URL}/images", ssl: { verify: false })
-    response = conn.patch("/", {
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    response = conn.patch("/images/", {
       asset_id: params[:id],
       file_name: params[:file_name],
       description: params[:description],
-      updated_by: session[:user_id],
-      mime_type: "png",
+      updated_by: session[:pending_user],
+      mime_type: params[:mime_type],
       asset_type: "image"
     }, { "Authorization" => "Bearer #{session[:jwt]}" })
 
@@ -61,22 +66,29 @@ class ImagesController < ApplicationController
       redirect_to images_path
     else
       flash[:alert] = "Failed to update image"
-      render :edit, status: :unprocessable_entity
+      redirect_to images_path
     end
   end
 
   def download
     asset_id = params[:id]
-    conn = Faraday.new(url: "#{BACKEND_BASE_URL}/images", ssl: { verify: false })
-    response = conn.get("/#{asset_id}") do |req|
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    response = conn.get("/images/#{asset_id}") do |req|
       req.headers["Authorization"] = "Bearer #{session[:jwt]}"
     end
 
     if response.status == 200
       data = JSON.parse(response.body)
-      send_data(Base64.decode64(data["bytes"]),
-                filename: data["file_name"],
-                type: data["mimeType"])
+      byte_array = data["bytes"]["data"]
+      file_data = byte_array.pack("C*")
+
+      mime = data["mimeType"]
+      mime = "image/#{mime}" unless mime.to_s.start_with?("image/")
+
+      send_data file_data,
+                filename: data["file_name"] || "downloaded_image",
+                type: mime,
+                disposition: "attachment"
     else
       flash[:alert] = "You do not have access to download this image."
       redirect_to images_path

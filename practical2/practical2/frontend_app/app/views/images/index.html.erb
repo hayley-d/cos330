@@ -1,15 +1,15 @@
-<div class="p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Images</h1>
+<div class="p-6 bg-pink-50 min-h-screen">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-extrabold text-pink-600">Images</h1>
     <div class="flex space-x-3">
       <%= link_to home_path,
-                  class: "bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 flex items-center space-x-2" do %>
+                  class: "bg-pink-100 text-pink-700 px-4 py-2 rounded-lg shadow hover:bg-pink-200 flex items-center space-x-2 transition" do %>
         <i class="fas fa-arrow-left"></i>
         <span>Back</span>
       <% end %>
 
       <%= link_to new_image_path,
-                  class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center space-x-2" do %>
+                  class: "bg-pink-500 text-white px-4 py-2 rounded-lg shadow hover:bg-pink-600 flex items-center space-x-2 transition" do %>
         <i class="fas fa-plus"></i>
         <span>New Image</span>
       <% end %>
@@ -20,27 +20,22 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <% @images.each do |img| %>
         <% if img["asset_id"].present? %>
-          <div class="bg-white shadow rounded p-4">
-            <h2 class="text-lg font-semibold"><%= img["file_name"] %></h2>
-            <p class="text-gray-600"><%= img["description"] %></p>
-            <div class="flex space-x-4 mt-4">
-              <%= link_to edit_image_path(img["asset_id"]),
-                          class: "text-yellow-600 hover:text-yellow-800",
-                          title: "Edit" do %>
-                <i class="fas fa-edit"></i>
-              <% end %>
+          <div class="bg-white shadow-md rounded-xl p-5 border border-pink-200 hover:shadow-lg transition">
+            <h2 class="text-lg font-bold text-pink-700"><%= img["file_name"] %></h2>
+            <p class="text-gray-600 mt-1"><%= img["description"] %></p>
 
-              <%= link_to download_image_path(img["asset_id"]),
-                          class: "text-green-600 hover:text-green-800",
-                          title: "Download" do %>
-                <i class="fas fa-download"></i>
-              <% end %>
+            <div class="flex space-x-5 mt-4 text-sm font-medium">
+              <%= link_to "Edit", edit_image_path(img["asset_id"]),
+                          class: "text-blue-600 hover:text-blue-800 transition" %>
+
+              <%= link_to "Download", download_image_path(img["asset_id"]),
+                          class: "text-pink-500 hover:text-pink-700 transition" %>
             </div>
           </div>
         <% end %>
       <% end %>
     </div>
   <% else %>
-    <p class="text-gray-500">No images found.</p>
+    <p class="text-gray-500 text-center italic">No images found.</p>
   <% end %>
 </div>
