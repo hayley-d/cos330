@@ -22,7 +22,11 @@ Rails.application.routes.draw do
 
   shallow do
     resources :roles
-    resources :images
+    resources :images do
+      member do
+        get :download
+      end
+    end
     resources :confidential
     resources :documents, only: [ :index, :new, :create, :edit, :update ] do
       member do

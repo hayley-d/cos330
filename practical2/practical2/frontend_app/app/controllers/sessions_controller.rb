@@ -19,6 +19,7 @@ class SessionsController < ApplicationController
 
     if body["mfa_required"]
       session[:pending_user] = body["user_id"]
+      session[:pending_user_email] = body["user_email"]
       redirect_to otp_path
     else
       flash[:alert] = "Invalid login credentials"
@@ -33,7 +34,7 @@ class SessionsController < ApplicationController
   def verify_otp
     conn = Faraday.new(url: BACKEND_BASE_URL, ssl: { verify: false })
     response = conn.post("#{BACKEND_BASE_URL}/verify", {
-      user_id: session[:pending_user],
+      user_email: session[:pending_user_email],
       current_ip: request.remote_ip,
       otp: params[:otp]
     })
@@ -93,7 +94,7 @@ class SessionsController < ApplicationController
       redirect_to home_path
     else
       flash[:alert] = "Invalid OTP"
-      redirect_to setup_mfa_path
+      redirect_to otp_path
     end
   end
 
