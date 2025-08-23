@@ -27,7 +27,11 @@ Rails.application.routes.draw do
         get :download
       end
     end
-    resources :confidential
+    resources :confidential do
+      member do
+        get :download
+      end
+    end
     resources :documents, only: [ :index, :new, :create, :edit, :update ] do
       member do
         get :download

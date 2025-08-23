@@ -36,9 +36,9 @@ class DocumentsController < ApplicationController
     end
 
     if response.status == 200
-      @image = JSON.parse(response.body)
+      @document = JSON.parse(response.body)
       @asset_id = params[:id]
-      @mime_type = @image["mimeType"].presence || "application/pdf"
+      @mime_type = @document["mimeType"].presence || "application/pdf"
     else
       flash[:alert] = "Failed to load image"
       redirect_to documents_path
@@ -92,7 +92,6 @@ class DocumentsController < ApplicationController
   end
 
   def new
-    # access check
     conn = Faraday.new(url: "#{BACKEND_BASE_URL}/roles", ssl: { verify: false })
     access_res = conn.post("/has_access", { permission: "create_doc" }.to_json,
                            "Authorization" => "Bearer #{session[:jwt]}",
@@ -108,14 +107,19 @@ class DocumentsController < ApplicationController
   def create
     file = params[:file]
     conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
-    response = conn.post("/documents/", {
+    payload = {
       file_name: params[:file_name],
       description: params[:description],
       created_by: session[:pending_user],
       content: file.read.bytes,
       mime_type: normalize_mime_type(file),
       asset_type: "document"
-    }, { "Authorization" => "Bearer #{session[:jwt]}" })
+    }
+    response = conn.post("/documents/") do |req|
+      req.headers["Authorization"] = "Bearer #{session[:jwt]}"
+      req.headers["Content-Type"] = "application/json"
+      req.body = payload.to_json
+    end
 
     if response.status == 201
       flash[:notice] = "Document created"
