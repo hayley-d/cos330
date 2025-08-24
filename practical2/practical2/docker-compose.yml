@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  node_backend:
+    build: ./backend  
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./backend:/app
+      - sqlite_data:/app/db 
+    working_dir: /app
+    ports:
+      - "3800:3800" 
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - rails_frontend
+
+  rails_frontend:
+    build: ./frontend_app 
+    command: bundle exec rails server -b 0.0.0.0 -p 3000    
+    volumes:
+      - ./frontend_app:/app
+      - sqlite_data:/app/db 
+    working_dir: /app
+    ports:
+      - "3000:3000" 
+    environment:
+      - RAILS_ENV=development
+      - NODE_ENV=development
+      - BACKEND_URL=https://node_backend:3800
+
+volumes:
+  sqlite_data:
