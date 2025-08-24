@@ -27,7 +27,7 @@ class ConfidentialController < ApplicationController
     )
 
     if access_res.status != 200
-      flash[:alert] = "You do not have permission to edit this document."
+      flash[:alert] = "You do not have permission to edit this confidential file."
       redirect_to confidential_index_path and return
     end
 
@@ -39,9 +39,8 @@ class ConfidentialController < ApplicationController
     if response.status == 200
       @document = JSON.parse(response.body)
       @asset_id = params[:id]
-      @mime_type = @document["mimeType"].presence || "application/text"
     else
-      flash[:alert] = "Failed to load image"
+      flash[:alert] = "Failed to load confidential file"
       redirect_to confidential_index_path
     end
   end
@@ -53,8 +52,9 @@ class ConfidentialController < ApplicationController
       asset_id: params[:id],
       file_name: params[:file_name],
       description: params[:description],
+      content: params[:content],
       updated_by: session[:pending_user],
-      mime_type: params[:mime_type],
+      mime_type: "application/text",
       asset_type: "confidential"
     }, { "Authorization" => "Bearer #{session[:jwt]}" })
 
@@ -76,8 +76,8 @@ class ConfidentialController < ApplicationController
 
     if response.status == 200
       data = JSON.parse(response.body)
-      byte_array = data["bytes"]["data"]
-      file_data = byte_array.pack("C*")
+
+      file_data = data["content"]
 
       mime = data["mimeType"]
       mime = "application/#{mime}" unless mime.to_s.start_with?("application/")
@@ -112,7 +112,7 @@ class ConfidentialController < ApplicationController
       description: params[:description],
       created_by: session[:pending_user],
       content: params[:content],
-      mime_type: "text/plain",
+      mime_type: "application/text",
       asset_type: "confidential"
     }
     response = conn.post("/confidential/") do |req|
@@ -129,6 +129,35 @@ class ConfidentialController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+
+  def destroy
+    asset_id = params[:id]
+
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    access_res = conn.post("/has_access", { permission: "delete_conf" }.to_json,
+                           "Authorization" => "Bearer #{session[:jwt]}",
+                           "Content-Type" => "application/json"
+    )
+
+    if access_res.status != 200
+      flash[:alert] = "You do not have permission to delete confidential files."
+      redirect_to confidential_index_path
+    end
+
+    response = conn.delete("/confidential/#{asset_id}") do |req|
+      req.headers["Authorization"] = "Bearer #{session[:jwt]}"
+      req.headers["Content-Type"] = "application/json"
+    end
+
+    if response.status == 200
+      flash[:notice] = "Confidential file deleted successfully"
+    else
+      flash[:alert] = "Failed to delete confidential file"
+    end
+
+    redirect_to confidential_index_path
+  end
+
 
   private
     def normalize_mime_type(file)

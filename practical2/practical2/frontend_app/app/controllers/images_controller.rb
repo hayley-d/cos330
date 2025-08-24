@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ImagesController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: [ :destroy ]
 
   def index
     conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
@@ -129,6 +130,35 @@ class ImagesController < ApplicationController
       flash[:alert] = "Failed to create image"
       render :new, status: :unprocessable_entity
     end
+  end
+
+
+  def destroy
+    asset_id = params[:id]
+
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    access_res = conn.post("/has_access", { permission: "delete_image" }.to_json,
+                           "Authorization" => "Bearer #{session[:jwt]}",
+                           "Content-Type" => "application/json"
+    )
+
+    if access_res.status != 200
+      flash[:alert] = "You do not have permission to delete images."
+      redirect_to images_path and return
+    end
+
+    response = conn.delete("/images/#{asset_id}") do |req|
+      req.headers["Authorization"] = "Bearer #{session[:jwt]}"
+      req.headers["Content-Type"] = "application/json"
+    end
+
+    if response.status == 200
+      flash[:notice] = "Images deleted successfully"
+    else
+      flash[:alert] = "Failed to delete image"
+    end
+
+    redirect_to images_path
   end
 
   private

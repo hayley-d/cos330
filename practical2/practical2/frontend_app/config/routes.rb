@@ -32,7 +32,7 @@ Rails.application.routes.draw do
         get :download
       end
     end
-    resources :documents, only: [ :index, :new, :create, :edit, :update ] do
+    resources :documents, only: [ :index, :new, :create, :edit, :update, :destroy ] do
       member do
         get :download
       end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class DocumentsController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: [ :destroy ]
 
   def index
     conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
@@ -128,6 +129,34 @@ class DocumentsController < ApplicationController
       flash[:alert] = "Failed to create document"
       render :new, status: :unprocessable_entity
     end
+  end
+
+  def destroy
+    asset_id = params[:id]
+
+    conn = Faraday.new(url: "#{BACKEND_BASE_URL}", ssl: { verify: false })
+    access_res = conn.post("/has_access", { permission: "delete_doc" }.to_json,
+                           "Authorization" => "Bearer #{session[:jwt]}",
+                           "Content-Type" => "application/json"
+    )
+
+    if access_res.status != 200
+      flash[:alert] = "You do not have permission to delete documents."
+      redirect_to documents_path
+    end
+
+    response = conn.delete("/documents/#{asset_id}") do |req|
+      req.headers["Authorization"] = "Bearer #{session[:jwt]}"
+      req.headers["Content-Type"] = "application/json"
+    end
+
+    if response.status == 200
+      flash[:notice] = "Document deleted successfully"
+    else
+      flash[:alert] = "Failed to delete document"
+    end
+
+    redirect_to documents_path
   end
 
   private
