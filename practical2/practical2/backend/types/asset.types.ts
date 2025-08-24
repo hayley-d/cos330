@@ -32,7 +32,6 @@ export type GetAssetOption = {
   asset_type?: "confidential" | "image" | "document";
 };
 
-
 export type GetConfidentialAssetOption = {
   ok: boolean;
   error?: string;

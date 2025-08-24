@@ -11,7 +11,8 @@ import {
 } from "../repositories/asset.repo";
 
 import {
-  GetAssetOption, GetConfidentialAssetOption,
+  GetAssetOption,
+  GetConfidentialAssetOption,
   RequestAssetOption,
   RequestOption,
 } from "../types/asset.types";
@@ -51,7 +52,7 @@ export async function getAssetByID(
     );
 
     if (!hasPermissions) {
-      console.log("User does not have permission")
+      console.log("User does not have permission");
       return {
         ok: false,
         error: "Failed to view asset, the user does not have permission.",
@@ -248,10 +249,9 @@ export async function deleteAsset(
   return softDeleteAsset(db, props);
 }
 
-
 export async function getConfidentialAssetByID(
-    db: DB,
-    props: ReadAssetDto,
+  db: DB,
+  props: ReadAssetDto,
 ): Promise<GetConfidentialAssetOption> {
   const user: User | null = await getUserById(db, props.user_id as UUID);
   const asset: GetAssetOption = await getAssetBytes(db, props.asset_id as UUID);
@@ -263,11 +263,7 @@ export async function getConfidentialAssetByID(
     };
   }
 
-  const hasPermissions = await roleHasPermission(
-      db,
-      user.role_id,
-      "view_conf",
-  );
+  const hasPermissions = await roleHasPermission(db, user.role_id, "view_conf");
 
   if (!hasPermissions) {
     return {

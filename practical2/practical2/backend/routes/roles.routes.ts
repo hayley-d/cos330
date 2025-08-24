@@ -19,13 +19,11 @@ export default function rolesRoutes(db: DB) {
       // @ts-ignore
       const user = await getUserById(db, req.user.user_id);
       if (!user) {
-          console.error("[ROLES ROUTE]: User not found")
         return res.status(404).json({ error: "User not found." });
       }
       const parsed = hasAccessSchema.safeParse(req.body);
 
       if (!parsed.success) {
-          console.error("[ROLES ROUTE]: Failed to parse payload.")
         return res.status(400).json({ error: parsed.error.flatten });
       }
 
@@ -36,11 +34,9 @@ export default function rolesRoutes(db: DB) {
       );
 
       if (!result) {
-          console.error("[ROLES ROUTE]: Failed to find permission.")
         return res.status(400).json(result);
       }
 
-        console.error("[ROLES ROUTE]: Successfully found permission..")
       return res.status(200).json(result);
     },
   );

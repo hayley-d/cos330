@@ -6,7 +6,8 @@ import dotenv from "dotenv";
 import { UUID } from "../types";
 import {
   AssetListOptions,
-  GetAssetOption, GetConfidentialAssetOption,
+  GetAssetOption,
+  GetConfidentialAssetOption,
   ListAssetsOption,
   RequestAssetOption,
   RequestOption,
@@ -168,10 +169,7 @@ export async function createConfidentialAsset(
 
   const nonce = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-  const aad = Buffer.from(
-    `${assetId}|confidential|${asset.mime_type}`,
-    "utf8",
-  );
+  const aad = Buffer.from(`${assetId}|confidential|${asset.mime_type}`, "utf8");
   cipher.setAAD(aad);
   const ciphertext = Buffer.concat([
     cipher.update(asset.content),
@@ -384,7 +382,10 @@ export async function updateConfidentialAsset(
     const dataKey = hkdf32(MASTER_KEY, keyId, asset.asset_id);
     const nonce = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-    const aad = Buffer.from(`${asset.asset_id}|confidential|application/text`, "utf8");
+    const aad = Buffer.from(
+      `${asset.asset_id}|confidential|application/text`,
+      "utf8",
+    );
     cipher.setAAD(aad);
     const ciphertext = Buffer.concat([
       cipher.update(asset.content),

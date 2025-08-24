@@ -114,18 +114,15 @@ export default function userRoutes(db: DB) {
   );
 
   router.post("/login", async (req: Request<{}, {}, UserLoginDto>, res) => {
-    console.log("[REQ BODY]: ", req.body);
     const parsed = UserLoginSchema.safeParse(req.body);
 
     if (!parsed.success) {
-      console.error("[LOGIN]: Failed to parse payload");
       return res.status(400).json({ error: parsed.error.flatten });
     }
 
     const result: RequestUserOption = await login(db, parsed.data);
 
     if (!result.ok) {
-      console.error("[LOGIN]: Failed to login user.");
       return res.status(400).json(result);
     }
 
@@ -146,7 +143,6 @@ export default function userRoutes(db: DB) {
     const result = await validateUserOtp(db, req.body);
 
     if (!result.ok) {
-      console.error("[LOGIN]: Failed to verify token");
       return res.status(400).json(result);
     }
 

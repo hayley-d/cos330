@@ -36,7 +36,10 @@ export const confPatchSchema = z.object({
   updated_by: z
     .string()
     .regex(uuidV4Regex, "updated_by must be a valid UUID v4"),
-  content:  z.string().transform((val) => Buffer.from(val, "utf-8")).optional(),
+  content: z
+    .string()
+    .transform((val) => Buffer.from(val, "utf-8"))
+    .optional(),
   file_name: z.string().max(255).transform(sanitizeString).optional(),
   description: z.string().transform(sanitizeString).optional(),
 });

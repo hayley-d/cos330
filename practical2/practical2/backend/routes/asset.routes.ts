@@ -52,7 +52,10 @@ export function confidentialRoutes(db: DB) {
     // @ts-ignore
     const user_id = req.user.user_id;
 
-    const result: GetAssetOption = await getAssetByID(db, { asset_id: asset_id!, user_id: user_id });
+    const result: GetAssetOption = await getAssetByID(db, {
+      asset_id: asset_id!,
+      user_id: user_id,
+    });
 
     if (!result.ok) {
       return res.status(400).json(result);
