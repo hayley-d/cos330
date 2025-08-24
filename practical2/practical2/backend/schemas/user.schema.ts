@@ -4,21 +4,15 @@ export const CreateUserDTOSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   email: z
-      .string()
-      .regex(
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-          "Invalid email address"
-      ),
+    .string()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export const ValidateMfaSchema = z.object({
-  user_email:z
-      .string()
-      .regex(
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-          "Invalid email address"
-      ),
+  user_email: z
+    .string()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email address"),
   token: z.string().nonempty(),
 });
 

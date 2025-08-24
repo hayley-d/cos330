@@ -24,12 +24,11 @@ declare global {
 
 export function makeRequestLogger(db: DB) {
   return function requestLogger(
-      req: Request,
-      res: Response,
-      next: NextFunction,
+    req: Request,
+    res: Response,
+    next: NextFunction,
   ) {
     const requestId: string = randomUUID();
-    console.log(req.originalUrl)
     const endpoint: string = req.originalUrl.split("?")[0]?.slice(0, 50) ?? "";
     const originIp: string = req.ip || req.socket.remoteAddress || "unknown";
 
@@ -54,8 +53,7 @@ export function makeRequestLogger(db: DB) {
               role_id: payload.role_id,
             };
           }
-        } catch {
-        }
+        } catch {}
       }
     }
 
@@ -65,14 +63,14 @@ export function makeRequestLogger(db: DB) {
       const success = res.statusCode >= 200 && res.statusCode < 400 ? 1 : 0;
 
       db.run(
-          `INSERT INTO request_log (request_id, endpoint, origin_ip, user_id, success)
+        `INSERT INTO request_log (request_id, endpoint, origin_ip, user_id, success)
            VALUES (?, ?, ?, ?, ?)`,
-          [requestId, endpoint, originIp, userId, success],
+        [requestId, endpoint, originIp, userId, success],
       );
     });
 
     console.log(
-        `[REQUEST LOG]\t${requestId}\t${endpoint}\t${originIp}\t${userId}`,
+      `[REQUEST LOG]\t${requestId}\t${endpoint}\t${originIp}\t${userId}`,
     );
     next();
   };

@@ -11,12 +11,14 @@ import {
 } from "../repositories/asset.repo";
 
 import {
-  GetAssetOption,
+  GetAssetOption, GetConfidentialAssetOption,
   RequestAssetOption,
   RequestOption,
 } from "../types/asset.types";
 import {
-  CreateAssetDto, createConfidentialDto, createDocumentDto,
+  CreateAssetDto,
+  createConfidentialDto,
+  createDocumentDto,
   DeleteAssetDto,
   PatchAssetDto,
   ReadAssetDto,
@@ -49,6 +51,7 @@ export async function getAssetByID(
     );
 
     if (!hasPermissions) {
+      console.log("User does not have permission")
       return {
         ok: false,
         error: "Failed to view asset, the user does not have permission.",
@@ -76,8 +79,8 @@ export async function getAssetByID(
 }
 
 export async function createConfidentialAssetService(
-    db: DB,
-    asset: createConfidentialDto,
+  db: DB,
+  asset: createConfidentialDto,
 ): Promise<RequestOption> {
   const user: User | null = await getUserById(db, asset.created_by as UUID);
 
@@ -90,21 +93,21 @@ export async function createConfidentialAssetService(
 
   const assetId: UUID = randomUUID() as UUID;
 
-    const hasPermissions = await roleHasPermission(
-        db,
-        user.role_id,
-        "create_conf",
-    );
+  const hasPermissions = await roleHasPermission(
+    db,
+    user.role_id,
+    "create_conf",
+  );
 
-    if (!hasPermissions) {
-      console.error("Unable to create asset, the user does not have permission.");
-      return {
-        ok: false,
-        error: "Failed to create asset, the user does not have permission.",
-      };
-    }
+  if (!hasPermissions) {
+    console.error("Unable to create asset, the user does not have permission.");
+    return {
+      ok: false,
+      error: "Failed to create asset, the user does not have permission.",
+    };
+  }
 
-    return await createConfidentialAsset(db, assetId, asset);
+  return await createConfidentialAsset(db, assetId, asset);
 }
 
 export async function createAsset(
@@ -122,23 +125,19 @@ export async function createAsset(
 
   const assetId: UUID = randomUUID() as UUID;
 
-    const permission =
-      asset.asset_type === "image" ? "create_image" : "create_doc";
+  const permission =
+    asset.asset_type === "image" ? "create_image" : "create_doc";
 
-    const hasPermissions = await roleHasPermission(
-      db,
-      user.role_id,
-      permission,
-    );
+  const hasPermissions = await roleHasPermission(db, user.role_id, permission);
 
-    if (!hasPermissions) {
-      return {
-        ok: false,
-        error: "Failed to create asset, the user does not have permission.",
-      };
-    }
+  if (!hasPermissions) {
+    return {
+      ok: false,
+      error: "Failed to create asset, the user does not have permission.",
+    };
+  }
 
-    return await createPublicAsset(db, assetId, asset);
+  return await createPublicAsset(db, assetId, asset);
 }
 
 export async function getAsset(
@@ -247,4 +246,35 @@ export async function deleteAsset(
   }
 
   return softDeleteAsset(db, props);
+}
+
+
+export async function getConfidentialAssetByID(
+    db: DB,
+    props: ReadAssetDto,
+): Promise<GetConfidentialAssetOption> {
+  const user: User | null = await getUserById(db, props.user_id as UUID);
+  const asset: GetAssetOption = await getAssetBytes(db, props.asset_id as UUID);
+
+  if (!user) {
+    return {
+      ok: false,
+      error: "Failed to find user that requested delete operation.",
+    };
+  }
+
+  const hasPermissions = await roleHasPermission(
+      db,
+      user.role_id,
+      "view_conf",
+  );
+
+  if (!hasPermissions) {
+    return {
+      ok: false,
+      error: "Failed to view asset, the user does not have permission.",
+    };
+  }
+
+  return asset;
 }

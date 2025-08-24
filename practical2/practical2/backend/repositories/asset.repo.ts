@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import { UUID } from "../types";
 import {
   AssetListOptions,
-  GetAssetOption,
+  GetAssetOption, GetConfidentialAssetOption,
   ListAssetsOption,
   RequestAssetOption,
   RequestOption,
@@ -164,12 +164,12 @@ export async function createConfidentialAsset(
   asset: CreateAssetDto,
 ): Promise<RequestOption> {
   const keyId = asset.key_id ?? "v1";
-  const dataKey = hkdf32(MASTER_KEY, keyId, asset.key_id);
+  const dataKey = hkdf32(MASTER_KEY, keyId, assetId);
 
   const nonce = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
   const aad = Buffer.from(
-    `${asset.key_id}|confidential|${asset.mime_type}`,
+    `${assetId}|confidential|${asset.mime_type}`,
     "utf8",
   );
   cipher.setAAD(aad);
@@ -218,7 +218,7 @@ export async function createConfidentialAsset(
 export async function getAssetBytes(
   db: DB,
   assetId: UUID,
-): Promise<GetAssetOption> {
+): Promise<GetAssetOption | GetConfidentialAssetOption> {
   const row = await db.get<Asset>(
     `SELECT file_name, description, mime_type, asset_type, content,
             payload_ciphertext, payload_nonce, payload_tag, key_id
@@ -232,7 +232,13 @@ export async function getAssetBytes(
 
   if (row.asset_type !== "confidential") {
     if (row.content) {
-      return { ok: true, mimeType: row.mime_type, bytes: row.content!, description: row.description!, file_name: row.file_name! };
+      return {
+        ok: true,
+        mimeType: row.mime_type,
+        bytes: row.content!,
+        description: row.description!,
+        file_name: row.file_name!,
+      };
     } else {
       return { ok: false, error: "Asset content not found" };
     }
@@ -259,17 +265,19 @@ export async function getAssetBytes(
   }
 
   decipher.setAuthTag(row.payload_tag);
-
-  const bytes = Buffer.concat([
+  const decrypted = Buffer.concat([
     decipher.update(row.payload_ciphertext!),
     decipher.final(),
   ]);
+  const content = decrypted.toString("utf8");
 
   return {
     ok: true,
     mimeType: row.mime_type,
     asset_type: row.asset_type,
-    bytes,
+    content: content,
+    description: row.description!,
+    file_name: row.file_name!,
   };
 }
 
@@ -376,7 +384,7 @@ export async function updateConfidentialAsset(
     const dataKey = hkdf32(MASTER_KEY, keyId, asset.asset_id);
     const nonce = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv("aes-256-gcm", dataKey, nonce);
-    const aad = Buffer.from(`${asset.asset_id}|confidential|txt`, "utf8");
+    const aad = Buffer.from(`${asset.asset_id}|confidential|application/text`, "utf8");
     cipher.setAAD(aad);
     const ciphertext = Buffer.concat([
       cipher.update(asset.content),

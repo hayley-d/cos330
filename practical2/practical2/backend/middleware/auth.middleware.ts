@@ -11,13 +11,11 @@ export function authMiddleware(
   next: NextFunction,
 ) {
   if (!process.env.JWT_SECRET) {
-    console.error("JWT_SECRET required");
     throw new Error("JWT_SECRET environment variable not set");
   }
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.error("Missing authHeader");
     return res
       .status(401)
       .json({ error: "Authorization header missing or invalid" });
@@ -26,7 +24,6 @@ export function authMiddleware(
   const token: string | null = authHeader.split(" ")[1] ?? null;
 
   if (token === null) {
-    console.error("Missing token");
     return res.status(401).json({ error: "Token is required" });
   }
 
@@ -42,7 +39,6 @@ export function authMiddleware(
     req.user = decoded;
     next();
   } catch (err) {
-    console.error("Invalid token");
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 }

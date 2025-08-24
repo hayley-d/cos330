@@ -32,6 +32,17 @@ export type GetAssetOption = {
   asset_type?: "confidential" | "image" | "document";
 };
 
+
+export type GetConfidentialAssetOption = {
+  ok: boolean;
+  error?: string;
+  mimeType?: string;
+  content?: string;
+  description?: string;
+  file_name?: string;
+  asset_type?: "confidential" | "image" | "document";
+};
+
 export type ListAssetsOption = {
   items?: ListAssetItem[];
   ok: boolean;
