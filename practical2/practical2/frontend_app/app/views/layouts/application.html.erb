@@ -32,6 +32,8 @@
   <% end %>
 
     <%= yield %>
+  <%#= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+  <%= javascript_include_tag "application", type: "module" %>
 
   <script>
       document.addEventListener("DOMContentLoaded", () => {

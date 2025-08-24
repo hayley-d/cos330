@@ -1,0 +1,49 @@
+<div class="p-6 bg-pink-50 min-h-screen">
+<div class="flex justify-between items-center mb-8">
+  <h1 class="text-3xl font-extrabold text-pink-600">Analytics</h1>
+  <div class="flex space-x-3">
+    <%= link_to home_path,
+                class: "bg-pink-100 text-pink-700 px-4 py-2 rounded-lg shadow hover:bg-pink-200 flex items-center space-x-2 transition" do %>
+      <i class="fas fa-arrow-left"></i>
+      <span>Back</span>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
+  <div class="bg-white p-6 rounded-xl shadow">
+    <h2 class="text-xl font-semibold mb-3 text-pink-600">Impossible Travel Anomalies</h2>
+    <% if @impossible_travel.present? %>
+      <%= column_chart Array(@impossible_travel).flat_map { |user|
+        Array(user["anomalies"]).map { |a|
+          ["#{user["email"]} (#{a["from_ip"]} → #{a["to_ip"]})", a["speed_kmh"].to_i]
+        }
+      },
+                       xtitle: "User/IP Pairs",
+                       ytitle: "Speed (km/h)",
+                       colors: ["#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF", "#E0BAFF", "#FFC6FF"] %>
+    <% else %>
+      <p class="text-gray-500 italic">No anomalies detected.</p>
+    <% end %>
+  </div>
+
+  <div class="bg-white p-6 rounded-xl shadow">
+    <h2 class="text-xl font-semibold mb-3 text-pink-600">Session Hijacking Suspicions</h2>
+    <% if @session_hijacking.any? %>
+      <%= bar_chart @session_hijacking.map { |user|
+        {
+          name: user["email"],
+          data: user["anomalies"].map { |s|
+            ["#{s["from_ip"]} → #{s["to_ip"]}", s["time_diff_seconds"].to_i]
+          }
+        }
+      },
+                    xtitle: "User/IP Change",
+                    ytitle: "Seconds Between Requests",
+                    colors: ["#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF", "#E0BAFF", "#FFC6FF"] %>
+    <% else %>
+      <p class="text-gray-500 italic">No anomalies detected.</p>
+    <% end %>
+  </div>
+</div>
+</div>

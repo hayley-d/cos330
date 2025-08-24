@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   get "home", to: "home#index"
 
   shallow do
+    resources :analytics
     resources :roles do
       patch :approve_user, on: :collection
     end

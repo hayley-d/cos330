@@ -9,6 +9,7 @@ import { confidentialRoutes } from "./routes/asset.routes";
 import rolesRoutes from "./routes/roles.routes";
 import { imageRoutes } from "./routes/image.routes";
 import { documentRoutes } from "./routes/document.routes";
+import {analyticsRoutes} from "./routes/alanytics.routes";
 
 const options = {
   key: fs.readFileSync("./certs/key.pem"),
@@ -27,6 +28,7 @@ app.use("/", rolesRoutes(app_db));
 app.use("/", imageRoutes(app_db));
 app.use("/", documentRoutes(app_db));
 app.use("/", confidentialRoutes(app_db));
+app.use("/", analyticsRoutes(app_db));
 
 https.createServer(options, app).listen(3800, () => {
   console.log("HTTPS Express server running on https://localhost:3800");
