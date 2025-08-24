@@ -21,7 +21,9 @@ Rails.application.routes.draw do
   get "home", to: "home#index"
 
   shallow do
-    resources :roles
+    resources :roles do
+      patch :approve_user, on: :collection
+    end
     resources :images do
       member do
         get :download
@@ -39,7 +41,4 @@ Rails.application.routes.draw do
     end
 
   end
-
-
-
 end

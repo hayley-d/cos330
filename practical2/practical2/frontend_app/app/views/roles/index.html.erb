@@ -1,0 +1,43 @@
+<div class="p-6 bg-pink-50 min-h-screen">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-extrabold text-pink-600">Users</h1>
+    <div class="flex space-x-3">
+      <%= link_to home_path,
+                  class: "bg-pink-100 text-pink-700 px-4 py-2 rounded-lg shadow hover:bg-pink-200 flex items-center space-x-2 transition" do %>
+        <i class="fas fa-arrow-left"></i>
+        <span>Back</span>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @users.any? %>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @users.each do |user| %>
+        <% if user["user_id"].present? %>
+          <div class="bg-white shadow-md rounded-xl p-5 border border-pink-200 hover:shadow-lg transition">
+            <h2 class="text-lg font-bold text-pink-700"><%= "#{user["first_name"]} #{user["last_name"]}" %></h2>
+            <p class="text-gray-600 mt-1"><%= user["email"] %></p>
+
+            <div class="flex space-x-5 mt-4 text-sm font-medium">
+              <% if user["role_id"] == ROLE_IDS["Guest"] %>
+                <%= button_to "Approve Role",
+                              approve_user_roles_path,
+                              method: :patch,
+                              params: { user_id: user["user_id"] },
+                              class: "text-green-600 hover:text-green-800 transition" %>
+            <% else %>
+                <%= link_to "Edit Role",
+                            edit_role_path(user["user_id"]),
+                            class: "text-blue-600 hover:text-blue-800 transition" %>
+              <% end %>
+
+            </div>
+
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-gray-500 text-center italic">No documents found.</p>
+  <% end %>
+</div>

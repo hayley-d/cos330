@@ -1,0 +1,30 @@
+<div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-md border border-pink-200">
+  <h1 class="text-2xl font-extrabold text-pink-600 mb-6">
+    Edit Role for <%= @user["first_name"] %> <%= @user["last_name"] %>
+  </h1>
+
+  <%= form_with url: role_path(@user["user_id"]), method: :patch, local: true do |f| %>
+    <div class="mb-5">
+      <%= f.label :role_id, "Select Role", class: "block text-sm font-semibold text-pink-700 mb-1" %>
+
+      <% if @user["role_id"] == ROLE_IDS["Admin"] %>
+        <%= select_tag :role_id,
+                       options_for_select([["Admin", ROLE_IDS["Admin"]]], ROLE_IDS["Admin"]),
+                       disabled: true,
+                       class: "mt-1 block w-full border border-gray-300 rounded-md p-3 bg-gray-100 text-gray-600 cursor-not-allowed" %>
+        <p class="text-xs text-gray-500 mt-1 italic">Admin role cannot be changed.</p>
+      <% else %>
+        <%= select_tag :role_id,
+                       options_for_select(@roles.map { |name, id| [name, id] }, @user["role_id"]),
+                       class: "mt-1 block w-full border border-pink-300 rounded-md p-3 focus:ring-2 focus:ring-pink-400 focus:border-pink-400 bg-white" %>
+      <% end %>
+    </div>
+
+    <div class="flex justify-end space-x-3">
+      <%= submit_tag "Save Changes",
+                     class: "bg-pink-500 text-white px-6 py-2 rounded-lg shadow hover:bg-pink-600 transition" %>
+      <%= link_to "Cancel", roles_path,
+                  class: "bg-gray-100 text-gray-700 px-5 py-2 rounded-lg shadow hover:bg-gray-200 transition" %>
+    </div>
+  <% end %>
+</div>

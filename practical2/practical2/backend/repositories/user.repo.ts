@@ -32,6 +32,7 @@ import {
   UserSchema,
   validateMfaDto,
 } from "../schemas/user.schema";
+import { getRoleByName } from "./role.repo";
 
 export async function getUserById(db: DB, userId: UUID): Promise<User | null> {
   const row = await db.get<User>("SELECT * FROM users WHERE user_id = ?", [
@@ -139,15 +140,21 @@ export async function updateUserRole(
 
 export async function approveUser(
   db: DB,
-  dto: ApproveUserDto,
+  user_id: string,
 ): Promise<RequestOption> {
-  const user = await getUserById(db, dto.user_id);
+  const role = await getRoleByName(db, "User");
+  const user = await getUserById(db, user_id as UUID);
+
+  if (!role || !role.ok) {
+    return { ok: false, error: "Role not found." };
+  }
   if (!user) {
     return { ok: false, error: "User not found." };
   }
 
-  await db.run("UPDATE users SET is_approved = 1 WHERE user_id = ?", [
-    dto.user_id,
+  await db.run("UPDATE users SET role_id = ? WHERE user_id = ?", [
+    role.role?.role_id,
+    user_id,
   ]);
 
   return { ok: true };

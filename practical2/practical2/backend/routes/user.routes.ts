@@ -10,7 +10,7 @@ import {
   validateUserOtp,
   approveUser,
   validateMfa,
-  getUserList,
+  getUserList, getUserById,
 } from "../repositories/user.repo";
 import type {
   MfaResponse,
@@ -30,6 +30,7 @@ import {
   ValidateMfaSchema,
   ValidateOtpSchema,
 } from "../schemas/user.schema";
+import {UUID} from "../types";
 
 const router = Router();
 
@@ -44,6 +45,23 @@ export default function userRoutes(db: DB) {
     return res.status(200).json(list.items);
   });
 
+  router.get("/users/:user_id", authMiddleware, async (req, res) => {
+    try {
+      const user = await getUserById(db, req.params.user_id! as UUID);
+
+      if (!user) {
+        return res.status(400).json({ error: "Invalid user" });
+      }
+      return res
+          .status(200)
+          .json({ user_id: user.user_id, email: user.email, first_name: user.first_name, last_name: user.last_name, role_id: user.role_id });
+    } catch (err) {
+      return res
+          .status(500)
+          .json({ ok: false, error: "Internal server error" });
+    }
+  });
+
   router.post("/register", async (req: Request<{}, {}, CreateUserDTO>, res) => {
     try {
       const parsed = CreateUserDTOSchema.safeParse(req.body);
@@ -55,17 +73,13 @@ export default function userRoutes(db: DB) {
       const result: MfaResponse = await createUser(db, req.body);
 
       if (!result.ok) {
-        console.error("Failed to create new user");
         return res.status(400).json({ error: "Failed to create user" });
       }
-
-      console.log("USER EMAIL", result.user_email);
 
       return res
         .status(201)
         .json({ user_email: result.user_email, url: result.url });
     } catch (err) {
-      console.error("Some other issue");
       return res
         .status(500)
         .json({ ok: false, error: "Internal server error" });
@@ -79,15 +93,12 @@ export default function userRoutes(db: DB) {
         const parsed = ValidateMfaSchema.safeParse(req.body);
 
         if (!parsed.success) {
-          console.error("Failed to verity payload");
-          console.error(parsed.error.flatten);
           return res.status(400).json({ error: parsed.error.flatten });
         }
 
         const result = await validateMfa(db, parsed.data);
 
         if (!result.ok) {
-          console.error("Failed to verity MFA");
           return res.status(400).json({ error: result.error });
         }
 
@@ -162,46 +173,6 @@ export default function userRoutes(db: DB) {
       token,
     });
   });
-
-  router.patch(
-    "/approve",
-    authMiddleware,
-    async (req: Request<{}, {}, ApproveUserDto>, res) => {
-      const parsed = ApproveUserSchema.safeParse(req.body);
-
-      if (!parsed.success) {
-        return res.status(400).json({ error: parsed.error.flatten });
-      }
-
-      const result = await approveUser(db, req.body);
-
-      if (!result.ok) {
-        return res.status(404).json(result.error);
-      }
-
-      return res.status(200);
-    },
-  );
-
-  router.patch(
-    "/role",
-    authMiddleware,
-    async (req: Request<{}, {}, UpdateUserRoleDto>, res) => {
-      const parsed = UpdateUserRoleSchema.safeParse(req.body);
-
-      if (!parsed.success) {
-        return res.status(400).json({ error: parsed.error.flatten });
-      }
-
-      const result = await approveUser(db, req.body);
-
-      if (!result.ok) {
-        return res.status(404).json(result.error);
-      }
-
-      return res.status(200);
-    },
-  );
 
   return router;
 }
